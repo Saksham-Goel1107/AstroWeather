@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initAnimations();
     initMobileMenu();
     initGlobePreview();
+    initSubscriptionForm();
 });
 
 // Navigation functionality
@@ -500,3 +501,94 @@ body.loaded .hero-actions {
 
 // Add additional styles to head
 document.head.insertAdjacentHTML('beforeend', additionalStyles);
+
+// Subscription form functionality
+function initSubscriptionForm() {
+    const form = document.getElementById('subscriptionForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const alertDiv = document.getElementById('alert');
+
+    if (!form) return;
+
+    // Initialize EmailJS
+    const publicKey = 'IYg0lenEgMGJp891z'; // Replace with your EmailJS public key
+    if (publicKey && publicKey !== 'YOUR_PUBLIC_KEY') {
+        emailjs.init(publicKey);
+    } else {
+        console.error('EmailJS public key is not configured');
+        return;
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const name = formData.get('name').trim();
+        const email = formData.get('email').trim();
+        const country = formData.get('country');
+
+        // Validation
+        if (!name) {
+            showAlert('danger', 'Please enter your name');
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showAlert('danger', 'Please enter a valid email address');
+            return;
+        }
+
+        if (!country) {
+            showAlert('danger', 'Please select your country');
+            return;
+        }
+
+        // Disable button
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subscribing...';
+
+        try {
+            const templateParams = {
+                from_name: name,
+                from_email: email,
+                to_name: 'Saksham',
+                message: `Subscribe me to the weather updates for ${country}`,
+                reply_to: email,
+                country: country
+            };
+
+            const result = await emailjs.send(
+                'service_44sbutg', // Replace with your EmailJS service ID
+                'template_3906ei4', // Replace with your EmailJS template ID
+                templateParams
+            );
+
+            console.log('EmailJS Response:', result);
+            form.reset();
+            showAlert('success', 'Thank you for subscribing! You will receive daily weather updates.');
+        } catch (error) {
+            console.error('Error sending email:', error);
+            const errorMessage = error.text || 'Failed to subscribe. Please try again later.';
+            showAlert('danger', errorMessage);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-envelope"></i> Subscribe to Updates';
+        }
+    });
+
+    function showAlert(type, message) {
+        alertDiv.className = `alert ${type}`;
+        alertDiv.textContent = message;
+        alertDiv.style.display = 'block';
+        setTimeout(() => {
+            alertDiv.style.display = 'none';
+        }, 5000);
+    }
+}
+
+// Initialize subscription form when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing code ...
+    initSubscriptionForm();
+});
