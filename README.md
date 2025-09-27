@@ -2,7 +2,7 @@
 
 AstroWeather is an interactive 3D globe web application that displays real-time weather data and allows users to explore the Earth in a visually stunning interface. Similar to Google Earth or TV Garden, this application provides an immersive experience with day/night visualization, weather information, and location search capabilities.
 
-![AstroWeather Screenshot](screenshot.png)
+![AstroWeather Screenshot](Screenshot.png)
 
 ## Features
 
