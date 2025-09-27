@@ -20,8 +20,8 @@ const MARKER_SIZE = 0.1;
 const EARTH_TEXTURE_PATH = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg';
 const EARTH_BUMP_MAP_PATH = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg';
 const EARTH_SPECULAR_MAP_PATH = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_specular_2048.jpg';
-const EARTH_NIGHT_MAP_PATH = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.jpg';
-const CLOUDS_TEXTURE_PATH = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_clouds_2048.jpg';
+const EARTH_NIGHT_MAP_PATH = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_night_4096.jpg';
+const CLOUDS_TEXTURE_PATH = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_clouds_1024.png';
 const STARS_TEXTURE_PATH = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/stars_milkyway.jpg';
 
 // Weather API configuration
@@ -81,9 +81,30 @@ function init() {
     
     // Load user preferences
     loadUserPreferences();
+    // Add the 'View All Countries' floating button
+    createCountriesButton();
     
     // Start animation loop
     animate();
+}
+
+function createCountriesButton() {
+    // Small floating button placed near the controls area
+    const btn = document.createElement('button');
+    btn.className = 'view-countries-btn';
+    btn.title = 'View all countries';
+    btn.innerHTML = '<i class="fas fa-globe"></i>';
+    btn.style.position = 'fixed';
+    btn.style.right = '20px';
+    btn.style.bottom = '120px';
+    btn.style.zIndex = '60';
+    btn.style.pointerEvents = 'auto';
+    document.body.appendChild(btn);
+
+    btn.addEventListener('click', () => {
+        // Open the countries modal without a preselected country
+        openCountriesModal(null);
+    });
 }
 
 function playSound(soundType) {
@@ -134,17 +155,28 @@ function setupScene() {
 }
 
 function addStarsBackground() {
-    const textureLoader = new THREE.TextureLoader();
-    const starsTexture = textureLoader.load(STARS_TEXTURE_PATH);
-    
-    const starGeometry = new THREE.SphereGeometry(100, 32, 32);
-    const starMaterial = new THREE.MeshBasicMaterial({
-        map: starsTexture,
-        side: THREE.BackSide
+    const starsGeometry = new THREE.BufferGeometry();
+    const starsVertices = [];
+
+    // Generate random star positions in a large sphere
+    for (let i = 0; i < 1000; i++) {
+        const x = (Math.random() - 0.5) * 200;
+        const y = (Math.random() - 0.5) * 200;
+        const z = (Math.random() - 0.5) * 200;
+        starsVertices.push(x, y, z);
+    }
+
+    starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+
+    const starsMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.5,
+        transparent: true,
+        opacity: 0.8
     });
-    
-    const starSphere = new THREE.Mesh(starGeometry, starMaterial);
-    scene.add(starSphere);
+
+    const stars = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(stars);
 }
 
 function createGlobe() {
@@ -417,9 +449,227 @@ function onGlobeClick(event) {
         
         // Add pin at clicked position
         addPin(intersectionPoint, latitude, longitude);
+
+        // Previously we auto-opened the countries modal here. Now we only add a pin and let the user
+        // open the full countries list explicitly via the 'View All Countries' button.
     } else {
         console.log('No intersection with globe found');
     }
+}
+
+// Get country info from coordinates using OpenWeather reverse geocoding
+function getCountryAtLocation(latitude, longitude) {
+    return fetch(`${REVERSE_GEOCODING_API_URL}?lat=${latitude}&lon=${longitude}&limit=1&appid=${WEATHER_API_KEY}`)
+        .then(r => {
+            if (!r.ok) throw new Error('Reverse geocoding failed');
+            return r.json();
+        })
+        .then(arr => {
+            if (!arr || arr.length === 0) return null;
+            const item = arr[0];
+            return {
+                name: item.name || null,
+                country: item.country || null,
+                state: item.state || null,
+                lat: item.lat,
+                lon: item.lon
+            };
+        });
+}
+
+// Cache for fetched countries list
+let ALL_COUNTRIES_CACHE = null;
+
+function fetchAllCountries() {
+    if (ALL_COUNTRIES_CACHE) return Promise.resolve(ALL_COUNTRIES_CACHE);
+
+    // Try a trimmed fields query to reduce payload and avoid server errors
+    const urlWithFields = 'https://restcountries.com/v3.1/all?fields=name,cca2,cca3,region,capital,population,latlng,flags,maps';
+
+    return fetch(urlWithFields)
+        .then(r => {
+            if (!r.ok) {
+                // If server returns 400 Bad Request or similar, try the full endpoint as a fallback
+                console.warn('Primary countries request failed with status', r.status, '- retrying without fields');
+                return fetch('https://restcountries.com/v3.1/all');
+            }
+            return r;
+        })
+        .then(r => {
+            if (!r.ok) throw new Error('Failed to fetch countries');
+            return r.json();
+        })
+        .then(list => {
+            // Normalize into useful shape
+            const countries = list.map(c => ({
+                name: (c.name && (c.name.common || c.name.official)) || c.cca2 || c.cca3 || 'Unknown',
+                cca2: c.cca2 || '',
+                cca3: c.cca3 || '',
+                region: c.region || '',
+                capital: Array.isArray(c.capital) ? c.capital[0] : c.capital || '',
+                population: c.population || 0,
+                latlng: c.latlng || [],
+                flag: (c.flags && (c.flags.svg || c.flags.png)) || '',
+                maps: (c.maps && c.maps.googleMaps) || ''
+            }));
+            // Sort alphabetically
+            countries.sort((a, b) => a.name.localeCompare(b.name));
+            ALL_COUNTRIES_CACHE = countries;
+            return countries;
+        })
+        .catch(err => {
+            console.error('fetchAllCountries error:', err);
+            // Fallback: minimal local list so UI still works offline
+            const fallback = [
+                { name: 'United States', cca2: 'US', cca3: 'USA', region: 'Americas', capital: 'Washington, D.C.', population: 331002651, latlng: [38, -97], flag: '', maps: '' },
+                { name: 'India', cca2: 'IN', cca3: 'IND', region: 'Asia', capital: 'New Delhi', population: 1380004385, latlng: [20.5937, 78.9629], flag: '', maps: '' },
+                { name: 'United Kingdom', cca2: 'GB', cca3: 'GBR', region: 'Europe', capital: 'London', population: 67886011, latlng: [55, -3], flag: '', maps: '' },
+                { name: 'Australia', cca2: 'AU', cca3: 'AUS', region: 'Oceania', capital: 'Canberra', population: 25499884, latlng: [-25, 133], flag: '', maps: '' },
+                { name: 'South Africa', cca2: 'ZA', cca3: 'ZAF', region: 'Africa', capital: 'Pretoria', population: 59308690, latlng: [-30, 25], flag: '', maps: '' }
+            ];
+            ALL_COUNTRIES_CACHE = fallback;
+            return fallback;
+        });
+}
+
+function openCountriesModal(clickedCountryInfo) {
+    fetchAllCountries()
+        .then(countries => buildCountriesModal(countries, clickedCountryInfo))
+        .catch(err => {
+            console.error('Error loading countries list:', err);
+            alert('Could not load countries list. Please try again later.');
+        });
+}
+
+function buildCountriesModal(countries, clickedCountryInfo) {
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'detailed-modal countries-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Countries</h2>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="countries-sidebar">
+                    <input type="text" class="country-search" placeholder="Search countries..." />
+                    <div class="countries-list"></div>
+                </div>
+                <div class="countries-main">
+                    <div class="countries-info-placeholder">
+                        <p>Select a country from the list to view details.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Close handlers
+    modal.querySelector('.close-modal').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    const listContainer = modal.querySelector('.countries-list');
+    const mainContainer = modal.querySelector('.countries-main');
+    const searchInput = modal.querySelector('.country-search');
+
+    // Build list items
+    function renderList(filter = '') {
+        listContainer.innerHTML = '';
+        const filtered = countries.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
+        filtered.forEach(country => {
+            const item = document.createElement('div');
+            item.className = 'country-item';
+            item.innerHTML = `
+                <div class="country-head">
+                    <img src="${country.flag}" alt="flag" class="country-flag" />
+                    <span class="country-name">${country.name}</span>
+                    <button class="expand-btn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="country-details" style="display:none;">
+                    <p><strong>Capital:</strong> ${country.capital || 'N/A'}</p>
+                    <p><strong>Region:</strong> ${country.region || 'N/A'}</p>
+                    <p><strong>Population:</strong> ${country.population.toLocaleString()}</p>
+                    <p><strong>Lat/Lng:</strong> ${country.latlng.length ? country.latlng.join(', ') : 'N/A'}</p>
+                    <div style="margin-top:10px;display:flex;gap:8px;">
+                        <button class="view-country-btn details-button">View on Globe</button>
+                        <a class="open-maps" target="_blank" rel="noopener noreferrer">Open in Maps</a>
+                    </div>
+                </div>
+            `;
+
+            // Expand/collapse
+            const head = item.querySelector('.country-head');
+            const expandBtn = item.querySelector('.expand-btn');
+            const details = item.querySelector('.country-details');
+            head.addEventListener('click', () => {
+                const isVisible = details.style.display !== 'none';
+                // collapse others
+                listContainer.querySelectorAll('.country-details').forEach(d => d.style.display = 'none');
+                if (!isVisible) details.style.display = 'block';
+            });
+
+            expandBtn.addEventListener('click', (e) => { e.stopPropagation(); head.click(); });
+
+            // View on Globe
+            const viewBtn = item.querySelector('.view-country-btn');
+            viewBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (country.latlng.length === 2) {
+                    const [lat, lon] = country.latlng;
+                    // Compute 3D position
+                    const phi = (90 - lat) * (Math.PI / 180);
+                    const theta = (lon + 180) * (Math.PI / 180);
+                    const x = -GLOBE_RADIUS * Math.sin(phi) * Math.cos(theta);
+                    const y = GLOBE_RADIUS * Math.cos(phi);
+                    const z = GLOBE_RADIUS * Math.sin(phi) * Math.sin(theta);
+                    const position = new THREE.Vector3(x, y, z);
+                    addPin(position, lat, lon);
+                    rotateGlobeToPosition(position);
+                    // Show detailed info for this position
+                    showDetailedInfo(lat, lon);
+                } else {
+                    alert('Coordinates for this country are not available');
+                }
+            });
+
+            // Open in maps
+            const mapsLink = item.querySelector('.open-maps');
+            if (country.maps) {
+                mapsLink.href = country.maps;
+                mapsLink.textContent = 'Open in Maps';
+            } else if (country.latlng.length === 2) {
+                mapsLink.href = `https://www.google.com/maps/search/?api=1&query=${country.latlng[0]},${country.latlng[1]}`;
+                mapsLink.textContent = 'Open in Maps';
+            } else {
+                mapsLink.style.display = 'none';
+            }
+
+            listContainer.appendChild(item);
+        });
+    }
+
+    // Initial render
+    renderList('');
+
+    // If clickedCountryInfo provided, attempt to auto-expand that country
+    if (clickedCountryInfo && clickedCountryInfo.country) {
+        const matched = countries.find(c => c.cca2 === clickedCountryInfo.country || c.cca3 === clickedCountryInfo.country);
+        if (matched) {
+            // wait a tick to ensure list is populated
+            setTimeout(() => {
+                const el = Array.from(listContainer.querySelectorAll('.country-item')).find(n => n.querySelector('.country-name')?.textContent === matched.name);
+                if (el) el.querySelector('.country-head').click();
+            }, 100);
+        }
+    }
+
+    // Hook search
+    searchInput.addEventListener('input', (e) => {
+        renderList(e.target.value);
+    });
 }
 
 // Removed hover function - no cursor changes on hover
@@ -889,11 +1139,10 @@ function loadDetailedWeatherData(latitude, longitude) {
     Promise.all([
         fetch(`${WEATHER_API_URL}?lat=${latitude}&lon=${longitude}&units=metric&appid=${WEATHER_API_KEY}`),
         fetch(`${FORECAST_API_URL}?lat=${latitude}&lon=${longitude}&units=metric&appid=${WEATHER_API_KEY}`),
-        fetch(`${AIR_QUALITY_API_URL}?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}`),
-        fetch(`${UV_INDEX_API_URL}?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}`)
+        fetch(`${AIR_QUALITY_API_URL}?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}`)
     ])
     .then(responses => Promise.all(responses.map(r => r.json())))
-    .then(([current, forecast, airQuality, uvIndex]) => {
+    .then(([current, forecast, airQuality]) => {
         weatherContainer.innerHTML = `
             <div class="advanced-weather">
                 <div class="current-weather">
@@ -921,11 +1170,6 @@ function loadDetailedWeatherData(latitude, longitude) {
                             <i class="fas fa-compress-alt"></i>
                             <span class="label">Pressure</span>
                             <span class="value">${current.main.pressure} hPa</span>
-                        </div>
-                        <div class="detail-item">
-                            <i class="fas fa-sun"></i>
-                            <span class="label">UV Index</span>
-                            <span class="value">${uvIndex.value ? Math.round(uvIndex.value) : 'N/A'}</span>
                         </div>
                         <div class="detail-item">
                             <i class="fas fa-leaf"></i>
