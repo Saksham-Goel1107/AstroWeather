@@ -273,11 +273,6 @@ function setupEventListeners() {
     
     document.getElementById('reset-view').addEventListener('click', resetView);
     
-    
-    document.getElementById('close-panel').addEventListener('click', () => {
-        document.getElementById('info-panel').classList.remove('active');
-    });
-    
     // Search functionality
     document.getElementById('search-button').addEventListener('click', searchLocation);
     document.getElementById('search-input').addEventListener('keypress', (e) => {
@@ -626,8 +621,8 @@ function getWeatherData(latitude, longitude) {
             
             weatherDataElement.innerHTML = weatherHTML;
             
-            // Update location name
-            document.getElementById('location-name').textContent = data.name || `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`;
+            // Update location name - removed since panel is gone
+            // document.getElementById('location-name').textContent = data.name || `Lat: ${latitude.toFixed(2)}, Lon: ${longitude.toFixed(2)}`;
         })
         .catch(error => {
             console.error('Error fetching weather data:', error);
@@ -653,28 +648,6 @@ function getWeatherIcon(weatherId) {
         return 'fa-cloud'; // Clouds
     }
     return 'fa-cloud';
-}
-
-function updateLocationInfo(latitude, longitude) {
-    document.getElementById('latitude').textContent = latitude.toFixed(4) + '°';
-    document.getElementById('longitude').textContent = longitude.toFixed(4) + '°';
-    
-    // Get current UTC time
-    const utcNow = new Date();
-    
-    // Calculate approximate local time based on longitude (rough estimate)
-    const timeZoneOffsetHours = Math.round(longitude / 15); // Each 15° = 1 hour
-    const localTime = new Date(utcNow.getTime() + (timeZoneOffsetHours * 3600000));
-    
-    // Display the time
-    document.getElementById('local-time').textContent = localTime.toLocaleTimeString([], {
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit'
-    }) + ` (UTC${timeZoneOffsetHours >= 0 ? '+' : ''}${timeZoneOffsetHours})`;
-    
-    // Also try to get location name from reverse geocoding
-    getReverseGeocodingInfo(latitude, longitude);
 }
 
 function searchLocation() {
@@ -1140,23 +1113,12 @@ function getReverseGeocodingInfo(latitude, longitude) {
             if (data && data.length > 0) {
                 const location = data[0];
                 const locationName = `${location.name}${location.state ? ', ' + location.state : ''}, ${location.country}`;
-                document.getElementById('location-name').textContent = locationName;
-                
-                // Also get weather data
-                getWeatherData(latitude, longitude);
-                
-                // Update info panel
-                updateLocationInfo(latitude, longitude);
-                
-                // Show info panel
-                document.getElementById('info-panel').classList.add('active');
-            } else {
-                document.getElementById('location-name').textContent = `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`;
+                // Location name is no longer displayed since panel is removed
+                console.log('Location:', locationName);
             }
         })
         .catch(error => {
             console.error('Error getting location info:', error);
-            document.getElementById('location-name').textContent = `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`;
         });
 }
 
