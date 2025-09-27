@@ -1,36 +1,58 @@
 # Security Policy
 
-Thank you for helping keep AstroWeather and its users safe!
-
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in AstroWeather, please **do not open a public issue**. Instead, report it directly and responsibly by following these steps:
+We take the security of AstroWeather seriously. If you believe you've found a security vulnerability in our application, please follow these steps to report it:
 
-1. **Email:**
-   Please send your report to [sakshamgoel1107@gmail.com](mailto:sakshamgoel1107@gmail.com) with details of the vulnerability and steps to reproduce.
+1. **Do not disclose the vulnerability publicly** until it has been addressed by our team.
 
-2. **What to include:**
-   - A clear description of the vulnerability.
-   - Steps to reproduce or proof of concept.
-   - Any relevant logs, screenshots, or code snippets.
+2. **Email the details to**: security@example.com (replace with your actual contact email)
+   - Include a detailed description of the vulnerability
+   - Steps to reproduce the issue
+   - Potential impact of the vulnerability
+   - Any suggestions for mitigating or fixing the issue
 
-3. **Response:**
-   - You will receive an acknowledgment within 2 business days.
-   - We aim to investigate and address all reports promptly.
-   - Please keep the details confidential until a fix is released and we coordinate disclosure.
+3. You should receive an acknowledgment of your report within 48 hours.
+
+4. We will investigate all legitimate reports and do our best to quickly fix the problem.
+
+## Security Considerations
+
+### API Keys
+
+This application uses the OpenWeatherMap API which requires an API key. Please note:
+
+- Never commit your API key to the repository
+- Store your API key in a secure environment variable or configuration file that is not tracked by version control
+- Consider using API key rotation for production deployments
+
+### Data Privacy
+
+AstroWeather:
+- Does not collect or store personal user data
+- Only makes API calls to OpenWeatherMap when a user interacts with the globe
+- Does not track user location unless explicitly searched for by the user
 
 ## Supported Versions
 
-Only the latest version of AstroWeather is currently supported with security updates. Please ensure you keep your installation up-to-date.
+Only the latest version of AstroWeather is currently supported with security updates.
 
-| Version | Supported |
-| ------- | --------- |
-| Latest  | ✅        |
+## Security Best Practices for Deployment
 
-## Responsible Disclosure
+When deploying AstroWeather to production, consider the following security best practices:
 
-We appreciate your help in responsibly disclosing vulnerabilities. Your effort makes the AstroWeather project and the community safer!
+1. Use HTTPS to secure all communications
+2. Implement proper Content Security Policy (CSP) headers
+3. Keep all dependencies updated to their latest secure versions
+4. Consider implementing rate limiting if exposing to public internet
+5. Use subresource integrity checks for third-party resources
 
----
+## Acknowledgments
 
-For any security-related questions or concerns, please contact [sakshamgoel1107@gmail.com](mailto:sakshamgoel1107@gmail.com).
+We would like to thank the following individuals for their contributions to the security of AstroWeather:
+
+- (This section will be updated as security researchers contribute)
+
+## License
+
+The security policy is part of the AstroWeather project and is covered by the same MIT License.

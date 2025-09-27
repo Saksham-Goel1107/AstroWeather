@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroWeather - Explore the Cosmos</title>
+    <link rel="stylesheet" href="homepage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="cosmic-bg">
+        <div class="stars"></div>
+        <div class="shooting-stars"></div>
+        <div class="nebula"></div>
+        <div class="floating-particles"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-globe-americas"></i>
+                <span>AstroWeather</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#contact" class="nav-link">Contact</a>
+                <a href="glob.html" class="cta-button nav-cta">
+                    <i class="fas fa-rocket"></i>
+                    Launch Globe
+                </a>
+            </div>
+            <div class="mobile-menu-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-star"></i>
+                    <span>Explore the Universe</span>
+                </div>
+                <h1 class="hero-title">
+                    Discover Weather<br>
+                    <span class="gradient-text">Across the Cosmos</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Immerse yourself in an interactive 3D globe experience. Explore real-time weather data,
+                    astronomical phenomena, and the beauty of our planet from space.
+                </p>
+                <div class="hero-actions">
+                    <a href="glob.html" class="primary-cta">
+                        <i class="fas fa-play"></i>
+                        Start Exploration
+                    </a>
+                    <a href="#features" class="secondary-cta">
+                        <i class="fas fa-info-circle"></i>
+                        Learn More
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number">200+</div>
+                        <div class="stat-label">Countries</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Real-time Data</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">AI</div>
+                        <div class="stat-label">Powered Assistant</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="globe-demo-container">
+                    <div class="demo-header">
+                        <div class="demo-title">
+                            <i class="fas fa-globe-americas"></i>
+                            Live Earth View
+                        </div>
+                        <div class="demo-status">
+                            <span class="status-dot"></span>
+                            Real-time Data
+                        </div>
+                    </div>
+
+                    <div class="globe-preview">
+                        <div class="globe-container">
+                            <div class="globe-sphere">
+                                <div class="globe-texture"></div>
+                                <div class="continents">
+                                    <!-- Simplified continent shapes -->
+                                    <div class="continent north-america"></div>
+                                    <div class="continent europe"></div>
+                                    <div class="continent asia"></div>
+                                    <div class="continent africa"></div>
+                                    <div class="continent australia"></div>
+                                </div>
+                                <div class="globe-atmosphere"></div>
+                            </div>
+                            <div class="globe-rings"></div>
+                            <div class="globe-particles"></div>
+                        </div>
+
+                        <!-- Weather Data Points -->
+                        <div class="weather-points">
+                            <div class="weather-point" data-location="New York" data-temp="22°C" data-condition="Sunny">
+                                <div class="point-location">NYC</div>
+                                <div class="point-temp">22°</div>
+                            </div>
+                            <div class="weather-point" data-location="London" data-temp="15°C" data-condition="Cloudy">
+                                <div class="point-location">LON</div>
+                                <div class="point-temp">15°</div>
+                            </div>
+                            <div class="weather-point" data-location="Tokyo" data-temp="28°C" data-condition="Rainy">
+                                <div class="point-location">TOK</div>
+                                <div class="point-temp">28°</div>
+                            </div>
+                            <div class="weather-point" data-location="Sydney" data-temp="25°C" data-condition="Clear">
+                                <div class="point-location">SYD</div>
+                                <div class="point-temp">25°</div>
+                            </div>
+                        </div>
+
+                        <div class="globe-shadow"></div>
+                    </div>
+
+                    <!-- Mini Weather Dashboard -->
+                    <div class="mini-dashboard">
+                        <div class="dashboard-header">
+                            <h4>Featured Locations</h4>
+                            <div class="dashboard-controls">
+                                <button class="control-btn active" data-view="weather">
+                                    <i class="fas fa-cloud-sun"></i>
+                                </button>
+                                <button class="control-btn" data-view="temp">
+                                    <i class="fas fa-thermometer-half"></i>
+                                </button>
+                                <button class="control-btn" data-view="wind">
+                                    <i class="fas fa-wind"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="location-cards">
+                            <div class="location-card active" data-location="new-york">
+                                <div class="location-info">
+                                    <div class="location-name">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        New York
+                                    </div>
+                                    <div class="location-weather">
+                                        <div class="weather-icon">
+                                            <i class="fas fa-sun"></i>
+                                        </div>
+                                        <div class="weather-details">
+                                            <div class="temp">22°C</div>
+                                            <div class="condition">Sunny</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="location-stats">
+                                    <div class="stat">
+                                        <span class="label">Humidity</span>
+                                        <span class="value">65%</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="label">Wind</span>
+                                        <span class="value">12 km/h</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="location-card" data-location="tokyo">
+                                <div class="location-info">
+                                    <div class="location-name">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        Tokyo
+                                    </div>
+                                    <div class="location-weather">
+                                        <div class="weather-icon">
+                                            <i class="fas fa-cloud-rain"></i>
+                                        </div>
+                                        <div class="weather-details">
+                                            <div class="temp">28°C</div>
+                                            <div class="condition">Rainy</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="location-stats">
+                                    <div class="stat">
+                                        <span class="label">Humidity</span>
+                                        <span class="value">85%</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="label">Wind</span>
+                                        <span class="value">8 km/h</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-footer">
+                            <button class="view-all-btn">
+                                <i class="fas fa-external-link-alt"></i>
+                                View Full Globe
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="floating-elements">
+                        <div class="weather-icon">
+                            <i class="fas fa-cloud-sun"></i>
+                        </div>
+                        <div class="satellite">
+                            <i class="fas fa-satellite"></i>
+                        </div>
+                        <div class="moon">
+                            <i class="fas fa-moon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-mouse">
+                <div class="scroll-wheel"></div>
+            </div>
+            <span>Scroll to explore</span>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Powerful Features</h2>
+                <p>Experience the future of weather exploration with cutting-edge technology</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-globe-americas"></i>
+                    </div>
+                    <h3>3D Interactive Globe</h3>
+                    <p>Navigate through a stunning 3D representation of Earth with smooth controls and beautiful textures.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cloud-sun"></i>
+                    </div>
+                    <h3>Real-time Weather</h3>
+                    <p>Get instant weather data for any location on Earth with detailed forecasts and conditions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>AI Assistant</h3>
+                    <p>Chat with our intelligent AI assistant for weather insights, astronomical data, and climate information.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                    <h3>Astronomical Data</h3>
+                    <p>Explore sunrise/sunset times, moon phases, and celestial events for any location.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>Smart Search</h3>
+                    <p>Find any location instantly with our intelligent search system and location suggestions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Responsive Design</h3>
+                    <p>Enjoy a seamless experience across all devices - desktop, tablet, and mobile.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="stats-container">
+            <div class="stat-item">
+                <div class="stat-number">500K+</div>
+                <div class="stat-label">Locations Mapped</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">99.9%</div>
+                <div class="stat-label">Uptime</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">50M+</div>
+                <div class="stat-label">Weather Queries</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Real-time Updates</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced CTA Section -->
+    <section class="cta-section">
+        <div class="cta-floating-elements">
+            <i class="fas fa-star floating-icon"></i>
+            <i class="fas fa-cloud floating-icon"></i>
+            <i class="fas fa-moon floating-icon"></i>
+            <i class="fas fa-rocket floating-icon"></i>
+        </div>
+        <div class="cta-container">
+            <h2 class="cta-title">Ready to Explore the Cosmos?</h2>
+            <p class="cta-subtitle">
+                Join millions of users discovering the beauty of our planet through interactive weather data and astronomical wonders.
+            </p>
+            <div class="cta-buttons">
+                <a href="glob.html" class="cta-primary">
+                    <i class="fas fa-rocket"></i>
+                    Launch Globe Experience
+                </a>
+                <a href="#features" class="cta-secondary">
+                    <i class="fas fa-info-circle"></i>
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2>About AstroWeather</h2>
+                    <p>
+                        AstroWeather combines the beauty of space exploration with practical weather information.
+                        Our interactive 3D globe lets you discover weather patterns, astronomical events, and
+                        the interconnectedness of our planet's climate systems.
+                    </p>
+                    <p>
+                        Built with modern web technologies and powered by real-time data APIs, AstroWeather
+                        provides an immersive educational experience that makes learning about weather and
+                        astronomy engaging and accessible to everyone.
+                    </p>
+                    <div class="tech-stack">
+                        <span class="tech-badge">Three.js</span>
+                        <span class="tech-badge">WebGL</span>
+                        <span class="tech-badge">AI Powered</span>
+                        <span class="tech-badge">Real-time APIs</span>
+                    </div>
+                </div>
+                <div class="about-visual">
+                    <div class="tech-illustration">
+                        <div class="orbiting-elements">
+                            <div class="orbit-1">
+                                <i class="fas fa-cloud"></i>
+                            </div>
+                            <div class="orbit-2">
+                                <i class="fas fa-sun"></i>
+                            </div>
+                            <div class="orbit-3">
+                                <i class="fas fa-moon"></i>
+                            </div>
+                        </div>
+                        <div class="center-globe">
+                            <i class="fas fa-globe-americas"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Subscription Section -->
+    <section id="contact" class="subscription">
+        <div class="container">
+            <div class="subscription-content">
+                <div class="subscription-text">
+                    <h2>Subscribe to Daily Weather Updates</h2>
+                    <p>
+                        Get daily weather information for your country delivered straight to your inbox.
+                        Stay informed about temperature, conditions, and forecasts.
+                    </p>
+                </div>
+                <div class="subscription-form">
+                    <form id="subscriptionForm">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" placeholder="Your Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" placeholder="your@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="country">Country</label>
+                            <select id="country" name="country" required>
+                                <option value="">Select Country</option>
+                                <option value="United States">United States</option>
+                                <option value="United Kingdom">United Kingdom</option>
+                                <option value="Canada">Canada</option>
+                                <option value="Australia">Australia</option>
+                                <option value="Germany">Germany</option>
+                                <option value="France">France</option>
+                                <option value="Japan">Japan</option>
+                                <option value="India">India</option>
+                                <option value="Brazil">Brazil</option>
+                                <option value="Mexico">Mexico</option>
+                                <option value="Italy">Italy</option>
+                                <option value="Spain">Spain</option>
+                                <option value="Netherlands">Netherlands</option>
+                                <option value="Sweden">Sweden</option>
+                                <option value="Norway">Norway</option>
+                                <option value="Denmark">Denmark</option>
+                                <option value="Finland">Finland</option>
+                                <option value="Poland">Poland</option>
+                                <option value="Russia">Russia</option>
+                                <option value="China">China</option>
+                                <option value="South Korea">South Korea</option>
+                                <option value="Singapore">Singapore</option>
+                                <option value="New Zealand">New Zealand</option>
+                                <option value="South Africa">South Africa</option>
+                                <option value="Argentina">Argentina</option>
+                                <option value="Chile">Chile</option>
+                                <option value="Colombia">Colombia</option>
+                                <option value="Peru">Peru</option>
+                                <option value="Venezuela">Venezuela</option>
+                                <option value="Ecuador">Ecuador</option>
+                                <option value="Uruguay">Uruguay</option>
+                                <option value="Paraguay">Paraguay</option>
+                                <option value="Bolivia">Bolivia</option>
+                                <option value="Guyana">Guyana</option>
+                                <option value="Suriname">Suriname</option>
+                                <option value="French Guiana">French Guiana</option>
+                                <option value="Falkland Islands">Falkland Islands</option>
+                                <option value="Trinidad and Tobago">Trinidad and Tobago</option>
+                                <option value="Barbados">Barbados</option>
+                                <option value="Jamaica">Jamaica</option>
+                                <option value="Haiti">Haiti</option>
+                                <option value="Dominican Republic">Dominican Republic</option>
+                                <option value="Cuba">Cuba</option>
+                                <option value="Bahamas">Bahamas</option>
+                                <option value="Belize">Belize</option>
+                                <option value="Guatemala">Guatemala</option>
+                                <option value="El Salvador">El Salvador</option>
+                                <option value="Honduras">Honduras</option>
+                                <option value="Nicaragua">Nicaragua</option>
+                                <option value="Costa Rica">Costa Rica</option>
+                                <option value="Panama">Panama</option>
+                                <option value="Egypt">Egypt</option>
+                                <option value="Morocco">Morocco</option>
+                                <option value="Tunisia">Tunisia</option>
+                                <option value="Algeria">Algeria</option>
+                                <option value="Libya">Libya</option>
+                                <option value="Sudan">Sudan</option>
+                                <option value="Ethiopia">Ethiopia</option>
+                                <option value="Kenya">Kenya</option>
+                                <option value="Tanzania">Tanzania</option>
+                                <option value="Uganda">Uganda</option>
+                                <option value="Rwanda">Rwanda</option>
+                                <option value="Burundi">Burundi</option>
+                                <option value="Zimbabwe">Zimbabwe</option>
+                                <option value="Zambia">Zambia</option>
+                                <option value="Malawi">Malawi</option>
+                                <option value="Mozambique">Mozambique</option>
+                                <option value="Botswana">Botswana</option>
+                                <option value="Namibia">Namibia</option>
+                                <option value="Angola">Angola</option>
+                                <option value="Ghana">Ghana</option>
+                                <option value="Nigeria">Nigeria</option>
+                                <option value="Cameroon">Cameroon</option>
+                                <option value="Ivory Coast">Ivory Coast</option>
+                                <option value="Senegal">Senegal</option>
+                                <option value="Mali">Mali</option>
+                                <option value="Burkina Faso">Burkina Faso</option>
+                                <option value="Niger">Niger</option>
+                                <option value="Chad">Chad</option>
+                                <option value="Central African Republic">Central African Republic</option>
+                                <option value="Democratic Republic of the Congo">Democratic Republic of the Congo</option>
+                                <option value="Republic of the Congo">Republic of the Congo</option>
+                                <option value="Gabon">Gabon</option>
+                                <option value="Equatorial Guinea">Equatorial Guinea</option>
+                                <option value="Sao Tome and Principe">Sao Tome and Principe</option>
+                                <option value="Madagascar">Madagascar</option>
+                                <option value="Mauritius">Mauritius</option>
+                                <option value="Seychelles">Seychelles</option>
+                                <option value="Comoros">Comoros</option>
+                                <option value="Mayotte">Mayotte</option>
+                                <option value="Reunion">Reunion</option>
+                                <option value="Saudi Arabia">Saudi Arabia</option>
+                                <option value="United Arab Emirates">United Arab Emirates</option>
+                                <option value="Qatar">Qatar</option>
+                                <option value="Kuwait">Kuwait</option>
+                                <option value="Bahrain">Bahrain</option>
+                                <option value="Oman">Oman</option>
+                                <option value="Yemen">Yemen</option>
+                                <option value="Jordan">Jordan</option>
+                                <option value="Lebanon">Lebanon</option>
+                                <option value="Syria">Syria</option>
+                                <option value="Iraq">Iraq</option>
+                                <option value="Iran">Iran</option>
+                                <option value="Turkey">Turkey</option>
+                                <option value="Israel">Israel</option>
+                                <option value="Palestine">Palestine</option>
+                                <option value="Cyprus">Cyprus</option>
+                                <option value="Greece">Greece</option>
+                                <option value="Bulgaria">Bulgaria</option>
+                                <option value="Romania">Romania</option>
+                                <option value="Hungary">Hungary</option>
+                                <option value="Slovakia">Slovakia</option>
+                                <option value="Czech Republic">Czech Republic</option>
+                                <option value="Austria">Austria</option>
+                                <option value="Switzerland">Switzerland</option>
+                                <option value="Belgium">Belgium</option>
+                                <option value="Luxembourg">Luxembourg</option>
+                                <option value="Ireland">Ireland</option>
+                                <option value="Portugal">Portugal</option>
+                                <option value="Andorra">Andorra</option>
+                                <option value="Monaco">Monaco</option>
+                                <option value="San Marino">San Marino</option>
+                                <option value="Vatican City">Vatican City</option>
+                                <option value="Liechtenstein">Liechtenstein</option>
+                                <option value="Slovenia">Slovenia</option>
+                                <option value="Croatia">Croatia</option>
+                                <option value="Bosnia and Herzegovina">Bosnia and Herzegovina</option>
+                                <option value="Serbia">Serbia</option>
+                                <option value="Montenegro">Montenegro</option>
+                                <option value="Kosovo">Kosovo</option>
+                                <option value="North Macedonia">North Macedonia</option>
+                                <option value="Albania">Albania</option>
+                                <option value="Malta">Malta</option>
+                                <option value="Iceland">Iceland</option>
+                                <option value="Faroe Islands">Faroe Islands</option>
+                                <option value="Greenland">Greenland</option>
+                                <option value="Estonia">Estonia</option>
+                                <option value="Latvia">Latvia</option>
+                                <option value="Lithuania">Lithuania</option>
+                                <option value="Belarus">Belarus</option>
+                                <option value="Ukraine">Ukraine</option>
+                                <option value="Moldova">Moldova</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Armenia">Armenia</option>
+                                <option value="Azerbaijan">Azerbaijan</option>
+                                <option value="Kazakhstan">Kazakhstan</option>
+                                <option value="Kyrgyzstan">Kyrgyzstan</option>
+                                <option value="Tajikistan">Tajikistan</option>
+                                <option value="Turkmenistan">Turkmenistan</option>
+                                <option value="Uzbekistan">Uzbekistan</option>
+                                <option value="Mongolia">Mongolia</option>
+                                <option value="North Korea">North Korea</option>
+                                <option value="Taiwan">Taiwan</option>
+                                <option value="Hong Kong">Hong Kong</option>
+                                <option value="Macau">Macau</option>
+                                <option value="Vietnam">Vietnam</option>
+                                <option value="Laos">Laos</option>
+                                <option value="Cambodia">Cambodia</option>
+                                <option value="Thailand">Thailand</option>
+                                <option value="Myanmar">Myanmar</option>
+                                <option value="Malaysia">Malaysia</option>
+                                <option value="Indonesia">Indonesia</option>
+                                <option value="Philippines">Philippines</option>
+                                <option value="Brunei">Brunei</option>
+                                <option value="East Timor">East Timor</option>
+                                <option value="Papua New Guinea">Papua New Guinea</option>
+                                <option value="Solomon Islands">Solomon Islands</option>
+                                <option value="Vanuatu">Vanuatu</option>
+                                <option value="Fiji">Fiji</option>
+                                <option value="Samoa">Samoa</option>
+                                <option value="Tonga">Tonga</option>
+                                <option value="Tuvalu">Tuvalu</option>
+                                <option value="Kiribati">Kiribati</option>
+                                <option value="Marshall Islands">Marshall Islands</option>
+                                <option value="Micronesia">Micronesia</option>
+                                <option value="Palau">Palau</option>
+                                <option value="Nauru">Nauru</option>
+                                <option value="Bangladesh">Bangladesh</option>
+                                <option value="Bhutan">Bhutan</option>
+                                <option value="Nepal">Nepal</option>
+                                <option value="Sri Lanka">Sri Lanka</option>
+                                <option value="Maldives">Maldives</option>
+                                <option value="Pakistan">Pakistan</option>
+                                <option value="Afghanistan">Afghanistan</option>
+                                <option value="Tajikistan">Tajikistan</option>
+                                <option value="Kyrgyzstan">Kyrgyzstan</option>
+                                <option value="Turkmenistan">Turkmenistan</option>
+                                <option value="Uzbekistan">Uzbekistan</option>
+                                <option value="Kazakhstan">Kazakhstan</option>
+                                <option value="Mongolia">Mongolia</option>
+                                <option value="North Korea">North Korea</option>
+                                <option value="South Korea">South Korea</option>
+                                <option value="Japan">Japan</option>
+                                <option value="Taiwan">Taiwan</option>
+                                <option value="Hong Kong">Hong Kong</option>
+                                <option value="Macau">Macau</option>
+                                <option value="Vietnam">Vietnam</option>
+                                <option value="Laos">Laos</option>
+                                <option value="Cambodia">Cambodia</option>
+                                <option value="Thailand">Thailand</option>
+                                <option value="Myanmar">Myanmar</option>
+                                <option value="Malaysia">Malaysia</option>
+                                <option value="Indonesia">Indonesia</option>
+                                <option value="Philippines">Philippines</option>
+                                <option value="Brunei">Brunei</option>
+                                <option value="East Timor">East Timor</option>
+                                <option value="Papua New Guinea">Papua New Guinea</option>
+                                <option value="Solomon Islands">Solomon Islands</option>
+                                <option value="Vanuatu">Vanuatu</option>
+                                <option value="Fiji">Fiji</option>
+                                <option value="Samoa">Samoa</option>
+                                <option value="Tonga">Tonga</option>
+                                <option value="Tuvalu">Tuvalu</option>
+                                <option value="Kiribati">Kiribati</option>
+                                <option value="Marshall Islands">Marshall Islands</option>
+                                <option value="Micronesia">Micronesia</option>
+                                <option value="Palau">Palau</option>
+                                <option value="Nauru">Nauru</option>
+                                <option value="Bangladesh">Bangladesh</option>
+                                <option value="Bhutan">Bhutan</option>
+                                <option value="Nepal">Nepal</option>
+                                <option value="Sri Lanka">Sri Lanka</option>
+                                <option value="Maldives">Maldives</option>
+                                <option value="Pakistan">Pakistan</option>
+                                <option value="Afghanistan">Afghanistan</option>
+                            </select>
+                        </div>
+                        <button type="submit" id="submitBtn" class="subscribe-btn">
+                            <i class="fas fa-envelope"></i>
+                            Subscribe to Updates
+                        </button>
+                    </form>
+                    <div id="alert" class="alert" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Explore?</h2>
+                <p>Join thousands of users discovering the wonders of our planet and universe.</p>
+                <a href="glob.html" class="cta-button-large">
+                    <i class="fas fa-rocket"></i>
+                    Launch AstroWeather
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <i class="fas fa-globe-americas"></i>
+                    <span>AstroWeather</span>
+                </div>
+                <div class="footer-links">
+                    <a href="#features">Features</a>
+                    <a href="#about">About</a>
+                    <a href="#contact">Contact</a>
+                    <a href="glob.html">Launch App</a>
+                </div>
+                <div class="footer-social">
+                    <a href="https://github.com/Saksham-Goel1107" class="social-link"><i class="fab fa-github"></i></a>
+                    <a href="https://www.linkedin.com/in/saksham-goel-88b74b33a" class="social-link"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 AstroWeather. Built with passion for space and science.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Google Translate Widget -->
+    <div id="google_translate_element" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: rgba(10, 10, 15, 0.9); padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"></div>
+
+    <script src="homepage.js"></script>
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>

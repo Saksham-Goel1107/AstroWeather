@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroWeather - Interactive Globe</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Twinkling Stars -->
+    <div class="star star-1"></div>
+    <div class="star star-2"></div>
+    <div class="star star-3"></div>
+    <div class="star star-4"></div>
+    <div class="star star-5"></div>
+    <div class="star star-6"></div>
+    <div class="star star-7"></div>
+    <div class="star star-8"></div>
+    
+    <!-- Shooting Stars -->
+    <div class="shooting-star shooting-star-1"></div>
+    <div class="shooting-star shooting-star-2"></div>
+    <div class="shooting-star shooting-star-3"></div>
+    
+    <!-- Constellations -->
+    <div class="constellation constellation-1"></div>
+    <div class="constellation constellation-2"></div>
+    
+    <div class="loading-screen" id="loading-screen">
+        <div class="loader"></div>
+        <p>Loading AstroWeather...</p>
+    </div>
+
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-globe-americas"></i>
+                <h1>AstroWeather</h1>
+            </div>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search for a location...">
+                <button id="search-button"><i class="fas fa-search"></i></button>
+            </div>
+        </header>
+
+        <main>
+            <div id="globe-container"></div>
+        </main>
+
+        <div class="controls">
+            <button id="zoom-in"><i class="fas fa-plus"></i></button>
+            <button id="zoom-out"><i class="fas fa-minus"></i></button>
+            <button id="reset-view"><i class="fas fa-sync-alt"></i></button>
+            
+            <button id="drag-mode-toggle" class="drag-mode-btn active">
+                <i class="fas fa-lock"></i>
+                <span class="drag-mode-text">Drag Only</span>
+            </button>
+            
+            <button id="theme-toggle" class="control-btn" title="Toggle Theme (Ctrl+T)">
+                <i class="fas fa-sun"></i>
+            </button>
+            
+            <button id="sound-toggle" class="control-btn" title="Toggle Sound (Ctrl+M)">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            
+            <button id="fullscreen-toggle" class="control-btn" title="Toggle Fullscreen (Ctrl+F)">
+                <i class="fas fa-expand"></i>
+            </button>
+            
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
+    <script src="app.js"></script>
+
+    <!-- Google Translate Widget -->
+    <div id="google_translate_element" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: rgba(10, 10, 15, 0.9); padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"></div>
+
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
