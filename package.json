@@ -1,0 +1,22 @@
+{
+  "name": "astro-weather",
+  "version": "1.0.0",
+  "description": "Interactive 3D globe with weather data visualization",
+  "main": "index.js",
+  "scripts": {
+    "start": "http-server -p 8080 -c-1",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "weather",
+    "globe",
+    "3D",
+    "interactive",
+    "visualization"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "http-server": "^14.1.1"
+  }
+}

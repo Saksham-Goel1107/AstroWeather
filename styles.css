@@ -1,0 +1,341 @@
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #121212;
+    color: #ffffff;
+    overflow: hidden;
+}
+
+/* Loading Screen */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #121212;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.loader {
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 5px solid #3498db;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* App Container */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background-color: rgba(18, 18, 18, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo i {
+    font-size: 24px;
+    color: #3498db;
+    margin-right: 10px;
+}
+
+.logo h1 {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 5px 15px;
+    width: 300px;
+}
+
+#search-input {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 8px;
+    width: 100%;
+    outline: none;
+}
+
+#search-button {
+    background: transparent;
+    border: none;
+    color: #3498db;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* Main Content */
+main {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+#globe-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Info Panel */
+.info-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 350px;
+    background-color: rgba(18, 18, 18, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    transform: translateX(400px);
+    transition: transform 0.3s ease-in-out;
+    z-index: 5;
+}
+
+.info-panel.active {
+    transform: translateX(0);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel-header h2 {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+#close-panel {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.panel-content {
+    padding: 15px;
+}
+
+.weather-info, .location-info {
+    margin-bottom: 20px;
+}
+
+.weather-info h3, .location-info h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #3498db;
+}
+
+#weather-data, #location-data {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+#weather-data p, #location-data p {
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+/* Controls */
+.controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    background-color: rgba(18, 18, 18, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 10px;
+    z-index: 5;
+}
+
+.controls button {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.controls button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.toggle-container span {
+    font-size: 14px;
+    margin: 0 8px;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #2c3e50;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #3498db;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .logo {
+        margin-bottom: 15px;
+    }
+    
+    .search-container {
+        width: 100%;
+    }
+    
+    .info-panel {
+        width: 100%;
+        top: auto;
+        right: 0;
+        bottom: 0;
+        transform: translateY(100%);
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .info-panel.active {
+        transform: translateY(0);
+    }
+    
+    .controls {
+        bottom: 70px;
+    }
+}
+
+/* Animation for markers and UI elements */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.7; }
+}
+
+.marker {
+    animation: pulse 2s infinite;
+}
+
+/* Weather Icons */
+.weather-icon {
+    font-size: 36px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+/* Day/Night Mode Transition */
+.day-mode {
+    transition: background-color 1s ease;
+}
+
+.night-mode {
+    transition: background-color 1s ease;
+}

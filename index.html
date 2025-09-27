@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstroWeather - Interactive Globe</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="loading-screen" id="loading-screen">
+        <div class="loader"></div>
+        <p>Loading AstroWeather...</p>
+    </div>
+
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-globe-americas"></i>
+                <h1>AstroWeather</h1>
+            </div>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search for a location...">
+                <button id="search-button"><i class="fas fa-search"></i></button>
+            </div>
+        </header>
+
+        <main>
+            <div id="globe-container"></div>
+            
+            <div class="info-panel" id="info-panel">
+                <div class="panel-header">
+                    <h2 id="location-name">Select a location</h2>
+                    <button id="close-panel"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="panel-content">
+                    <div class="weather-info">
+                        <h3>Weather Information</h3>
+                        <div id="weather-data">
+                            <p>Select a location on the globe to view weather data</p>
+                        </div>
+                    </div>
+                    <div class="location-info">
+                        <h3>Location Details</h3>
+                        <div id="location-data">
+                            <p>Latitude: <span id="latitude">--</span></p>
+                            <p>Longitude: <span id="longitude">--</span></p>
+                            <p>Local Time: <span id="local-time">--</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div class="controls">
+            <button id="zoom-in"><i class="fas fa-plus"></i></button>
+            <button id="zoom-out"><i class="fas fa-minus"></i></button>
+            <button id="reset-view"><i class="fas fa-sync-alt"></i></button>
+            <div class="toggle-container">
+                <span>Day</span>
+                <label class="switch">
+                    <input type="checkbox" id="day-night-toggle">
+                    <span class="slider round"></span>
+                </label>
+                <span>Night</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
