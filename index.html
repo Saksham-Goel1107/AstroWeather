@@ -3,79 +3,429 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AstroWeather - Interactive Globe</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>AstroWeather - Explore the Cosmos</title>
+    <link rel="stylesheet" href="homepage.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Twinkling Stars -->
-    <div class="star star-1"></div>
-    <div class="star star-2"></div>
-    <div class="star star-3"></div>
-    <div class="star star-4"></div>
-    <div class="star star-5"></div>
-    <div class="star star-6"></div>
-    <div class="star star-7"></div>
-    <div class="star star-8"></div>
-    
-    <!-- Shooting Stars -->
-    <div class="shooting-star shooting-star-1"></div>
-    <div class="shooting-star shooting-star-2"></div>
-    <div class="shooting-star shooting-star-3"></div>
-    
-    <!-- Constellations -->
-    <div class="constellation constellation-1"></div>
-    <div class="constellation constellation-2"></div>
-    
-    <div class="loading-screen" id="loading-screen">
-        <div class="loader"></div>
-        <p>Loading AstroWeather...</p>
+    <!-- Animated Background -->
+    <div class="cosmic-bg">
+        <div class="stars"></div>
+        <div class="shooting-stars"></div>
+        <div class="nebula"></div>
+        <div class="floating-particles"></div>
     </div>
 
-    <div class="app-container">
-        <header>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
             <div class="logo">
                 <i class="fas fa-globe-americas"></i>
-                <h1>AstroWeather</h1>
+                <span>AstroWeather</span>
             </div>
-            <div class="search-container">
-                <input type="text" id="search-input" placeholder="Search for a location...">
-                <button id="search-button"><i class="fas fa-search"></i></button>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#contact" class="nav-link">Contact</a>
+                <a href="glob.html" class="cta-button nav-cta">
+                    <i class="fas fa-rocket"></i>
+                    Launch Globe
+                </a>
             </div>
-        </header>
-
-        <main>
-            <div id="globe-container"></div>
-        </main>
-
-        <div class="controls">
-            <button id="zoom-in"><i class="fas fa-plus"></i></button>
-            <button id="zoom-out"><i class="fas fa-minus"></i></button>
-            <button id="reset-view"><i class="fas fa-sync-alt"></i></button>
-            
-            <button id="drag-mode-toggle" class="drag-mode-btn active">
-                <i class="fas fa-lock"></i>
-                <span class="drag-mode-text">Drag Only</span>
-            </button>
-            
-            <button id="theme-toggle" class="control-btn" title="Toggle Theme (Ctrl+T)">
-                <i class="fas fa-sun"></i>
-            </button>
-            
-            <button id="sound-toggle" class="control-btn" title="Toggle Sound (Ctrl+M)">
-                <i class="fas fa-volume-up"></i>
-            </button>
-            
-            <button id="fullscreen-toggle" class="control-btn" title="Toggle Fullscreen (Ctrl+F)">
-                <i class="fas fa-expand"></i>
-            </button>
-            
+            <div class="mobile-menu-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
         </div>
-    </div>
+    </nav>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.min.js"></script>
-    <script src="app.js"></script>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-star"></i>
+                    <span>Explore the Universe</span>
+                </div>
+                <h1 class="hero-title">
+                    Discover Weather<br>
+                    <span class="gradient-text">Across the Cosmos</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Immerse yourself in an interactive 3D globe experience. Explore real-time weather data,
+                    astronomical phenomena, and the beauty of our planet from space.
+                </p>
+                <div class="hero-actions">
+                    <a href="glob.html" class="primary-cta">
+                        <i class="fas fa-play"></i>
+                        Start Exploration
+                    </a>
+                    <a href="#features" class="secondary-cta">
+                        <i class="fas fa-info-circle"></i>
+                        Learn More
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number">200+</div>
+                        <div class="stat-label">Countries</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Real-time Data</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">AI</div>
+                        <div class="stat-label">Powered Assistant</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="globe-demo-container">
+                    <div class="demo-header">
+                        <div class="demo-title">
+                            <i class="fas fa-globe-americas"></i>
+                            Live Earth View
+                        </div>
+                        <div class="demo-status">
+                            <span class="status-dot"></span>
+                            Real-time Data
+                        </div>
+                    </div>
+
+                    <div class="globe-preview">
+                        <div class="globe-container">
+                            <div class="globe-sphere">
+                                <div class="globe-texture"></div>
+                                <div class="continents">
+                                    <!-- Simplified continent shapes -->
+                                    <div class="continent north-america"></div>
+                                    <div class="continent europe"></div>
+                                    <div class="continent asia"></div>
+                                    <div class="continent africa"></div>
+                                    <div class="continent australia"></div>
+                                </div>
+                                <div class="globe-atmosphere"></div>
+                            </div>
+                            <div class="globe-rings"></div>
+                            <div class="globe-particles"></div>
+                        </div>
+
+                        <!-- Weather Data Points -->
+                        <div class="weather-points">
+                            <div class="weather-point" data-location="New York" data-temp="22°C" data-condition="Sunny">
+                                <div class="point-location">NYC</div>
+                                <div class="point-temp">22°</div>
+                            </div>
+                            <div class="weather-point" data-location="London" data-temp="15°C" data-condition="Cloudy">
+                                <div class="point-location">LON</div>
+                                <div class="point-temp">15°</div>
+                            </div>
+                            <div class="weather-point" data-location="Tokyo" data-temp="28°C" data-condition="Rainy">
+                                <div class="point-location">TOK</div>
+                                <div class="point-temp">28°</div>
+                            </div>
+                            <div class="weather-point" data-location="Sydney" data-temp="25°C" data-condition="Clear">
+                                <div class="point-location">SYD</div>
+                                <div class="point-temp">25°</div>
+                            </div>
+                        </div>
+
+                        <div class="globe-shadow"></div>
+                    </div>
+
+                    <!-- Mini Weather Dashboard -->
+                    <div class="mini-dashboard">
+                        <div class="dashboard-header">
+                            <h4>Featured Locations</h4>
+                            <div class="dashboard-controls">
+                                <button class="control-btn active" data-view="weather">
+                                    <i class="fas fa-cloud-sun"></i>
+                                </button>
+                                <button class="control-btn" data-view="temp">
+                                    <i class="fas fa-thermometer-half"></i>
+                                </button>
+                                <button class="control-btn" data-view="wind">
+                                    <i class="fas fa-wind"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="location-cards">
+                            <div class="location-card active" data-location="new-york">
+                                <div class="location-info">
+                                    <div class="location-name">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        New York
+                                    </div>
+                                    <div class="location-weather">
+                                        <div class="weather-icon">
+                                            <i class="fas fa-sun"></i>
+                                        </div>
+                                        <div class="weather-details">
+                                            <div class="temp">22°C</div>
+                                            <div class="condition">Sunny</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="location-stats">
+                                    <div class="stat">
+                                        <span class="label">Humidity</span>
+                                        <span class="value">65%</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="label">Wind</span>
+                                        <span class="value">12 km/h</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="location-card" data-location="tokyo">
+                                <div class="location-info">
+                                    <div class="location-name">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        Tokyo
+                                    </div>
+                                    <div class="location-weather">
+                                        <div class="weather-icon">
+                                            <i class="fas fa-cloud-rain"></i>
+                                        </div>
+                                        <div class="weather-details">
+                                            <div class="temp">28°C</div>
+                                            <div class="condition">Rainy</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="location-stats">
+                                    <div class="stat">
+                                        <span class="label">Humidity</span>
+                                        <span class="value">85%</span>
+                                    </div>
+                                    <div class="stat">
+                                        <span class="label">Wind</span>
+                                        <span class="value">8 km/h</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-footer">
+                            <button class="view-all-btn">
+                                <i class="fas fa-external-link-alt"></i>
+                                View Full Globe
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="floating-elements">
+                        <div class="weather-icon">
+                            <i class="fas fa-cloud-sun"></i>
+                        </div>
+                        <div class="satellite">
+                            <i class="fas fa-satellite"></i>
+                        </div>
+                        <div class="moon">
+                            <i class="fas fa-moon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-mouse">
+                <div class="scroll-wheel"></div>
+            </div>
+            <span>Scroll to explore</span>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>Powerful Features</h2>
+                <p>Experience the future of weather exploration with cutting-edge technology</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-globe-americas"></i>
+                    </div>
+                    <h3>3D Interactive Globe</h3>
+                    <p>Navigate through a stunning 3D representation of Earth with smooth controls and beautiful textures.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cloud-sun"></i>
+                    </div>
+                    <h3>Real-time Weather</h3>
+                    <p>Get instant weather data for any location on Earth with detailed forecasts and conditions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3>AI Assistant</h3>
+                    <p>Chat with our intelligent AI assistant for weather insights, astronomical data, and climate information.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                    <h3>Astronomical Data</h3>
+                    <p>Explore sunrise/sunset times, moon phases, and celestial events for any location.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>Smart Search</h3>
+                    <p>Find any location instantly with our intelligent search system and location suggestions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Responsive Design</h3>
+                    <p>Enjoy a seamless experience across all devices - desktop, tablet, and mobile.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="stats-container">
+            <div class="stat-item">
+                <div class="stat-number">500K+</div>
+                <div class="stat-label">Locations Mapped</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">99.9%</div>
+                <div class="stat-label">Uptime</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">50M+</div>
+                <div class="stat-label">Weather Queries</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Real-time Updates</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced CTA Section -->
+    <section class="cta-section">
+        <div class="cta-floating-elements">
+            <i class="fas fa-star floating-icon"></i>
+            <i class="fas fa-cloud floating-icon"></i>
+            <i class="fas fa-moon floating-icon"></i>
+            <i class="fas fa-rocket floating-icon"></i>
+        </div>
+        <div class="cta-container">
+            <h2 class="cta-title">Ready to Explore the Cosmos?</h2>
+            <p class="cta-subtitle">
+                Join millions of users discovering the beauty of our planet through interactive weather data and astronomical wonders.
+            </p>
+            <div class="cta-buttons">
+                <a href="glob.html" class="cta-primary">
+                    <i class="fas fa-rocket"></i>
+                    Launch Globe Experience
+                </a>
+                <a href="#features" class="cta-secondary">
+                    <i class="fas fa-info-circle"></i>
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2>About AstroWeather</h2>
+                    <p>
+                        AstroWeather combines the beauty of space exploration with practical weather information.
+                        Our interactive 3D globe lets you discover weather patterns, astronomical events, and
+                        the interconnectedness of our planet's climate systems.
+                    </p>
+                    <p>
+                        Built with modern web technologies and powered by real-time data APIs, AstroWeather
+                        provides an immersive educational experience that makes learning about weather and
+                        astronomy engaging and accessible to everyone.
+                    </p>
+                    <div class="tech-stack">
+                        <span class="tech-badge">Three.js</span>
+                        <span class="tech-badge">WebGL</span>
+                        <span class="tech-badge">AI Powered</span>
+                        <span class="tech-badge">Real-time APIs</span>
+                    </div>
+                </div>
+                <div class="about-visual">
+                    <div class="tech-illustration">
+                        <div class="orbiting-elements">
+                            <div class="orbit-1">
+                                <i class="fas fa-cloud"></i>
+                            </div>
+                            <div class="orbit-2">
+                                <i class="fas fa-sun"></i>
+                            </div>
+                            <div class="orbit-3">
+                                <i class="fas fa-moon"></i>
+                            </div>
+                        </div>
+                        <div class="center-globe">
+                            <i class="fas fa-globe-americas"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Explore?</h2>
+                <p>Join thousands of users discovering the wonders of our planet and universe.</p>
+                <a href="glob.html" class="cta-button-large">
+                    <i class="fas fa-rocket"></i>
+                    Launch AstroWeather
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <i class="fas fa-globe-americas"></i>
+                    <span>AstroWeather</span>
+                </div>
+                <div class="footer-links">
+                    <a href="#features">Features</a>
+                    <a href="#about">About</a>
+                    <a href="#contact">Contact</a>
+                    <a href="glob.html">Launch App</a>
+                </div>
+                <div class="footer-social">
+                    <a href="#" class="social-link"><i class="fab fa-github"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-discord"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 AstroWeather. Built with passion for space and science.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="homepage.js"></script>
 </body>
 </html>
