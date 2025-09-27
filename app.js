@@ -4,6 +4,10 @@ let raycaster, mouse;
 let markers = [];
 let isNightMode = false;
 let isLoading = true;
+let isDragging = false;
+let currentPin = null;
+let detailsButton = null;
+let dragOnlyMode = true;
 
 // Constants
 const GLOBE_RADIUS = 5;
@@ -156,7 +160,7 @@ function setupLighting() {
 }
 
 function setupControls() {
-    // Set up OrbitControls
+    // Set up OrbitControls for drag-only interaction
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
@@ -166,12 +170,52 @@ function setupControls() {
     controls.enablePan = false;
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.5;
+    
+    // Add drag detection
+    let mouseDownTime = 0;
+    let mouseDownPosition = new THREE.Vector2();
+    
+    let startPosition = new THREE.Vector2();
+    let hasMoved = false;
+    
+    controls.addEventListener('start', (event) => {
+        isDragging = false;
+        hasMoved = false;
+        mouseDownTime = Date.now();
+        startPosition.set(event.clientX || 0, event.clientY || 0);
+    });
+    
+    controls.addEventListener('change', () => {
+        if (!hasMoved) {
+            hasMoved = true;
+            setTimeout(() => {
+                isDragging = true;
+            }, 50);
+        }
+    });
+    
+    controls.addEventListener('end', () => {
+        // Reset dragging state after a short delay
+        setTimeout(() => {
+            isDragging = false;
+            hasMoved = false;
+        }, 150);
+    });
 }
 
 function setupEventListeners() {
-    // Globe interaction
+    // Globe interaction - only click, no hover cursor changes
     renderer.domElement.addEventListener('click', onGlobeClick);
-    renderer.domElement.addEventListener('mousemove', onGlobeHover);
+    renderer.domElement.style.cursor = 'grab';
+    
+    // Add mouse down/up for drag cursor
+    renderer.domElement.addEventListener('mousedown', () => {
+        renderer.domElement.style.cursor = 'grabbing';
+    });
+    
+    renderer.domElement.addEventListener('mouseup', () => {
+        renderer.domElement.style.cursor = 'grab';
+    });
     
     // UI controls
     document.getElementById('zoom-in').addEventListener('click', () => {
@@ -197,6 +241,9 @@ function setupEventListeners() {
             searchLocation();
         }
     });
+    
+    // Drag mode toggle
+    document.getElementById('drag-mode-toggle').addEventListener('click', toggleDragMode);
 }
 
 function gsapZoom(delta) {
@@ -289,115 +336,221 @@ function onWindowResize() {
 }
 
 function onGlobeClick(event) {
-    if (isLoading) return;
+    console.log('Globe clicked - Loading:', isLoading, 'DragOnly:', dragOnlyMode, 'Dragging:', isDragging);
+    
+    if (isLoading) {
+        console.log('Ignoring click - still loading');
+        return;
+    }
+    
+    if (dragOnlyMode && isDragging) {
+        console.log('Ignoring click - in drag mode and dragging');
+        return;
+    }
+    
+    console.log('Processing click...');
     
     // Calculate mouse position in normalized device coordinates
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    
+    console.log('Mouse position:', { x: mouse.x, y: mouse.y });
     
     // Update the picking ray with the camera and mouse position
     raycaster.setFromCamera(mouse, camera);
     
     // Calculate objects intersecting the picking ray
     const intersects = raycaster.intersectObject(globe);
+    
+    console.log('Intersections found:', intersects.length);
     
     if (intersects.length > 0) {
         const intersectionPoint = intersects[0].point;
+        
+        // Convert 3D point to latitude and longitude with better accuracy
         const normalizedPoint = intersectionPoint.clone().normalize();
         
-        // Convert to latitude and longitude
-        const latitude = Math.asin(normalizedPoint.y) * (180 / Math.PI);
-        const longitude = Math.atan2(normalizedPoint.x, normalizedPoint.z) * (180 / Math.PI);
+        // Convert to spherical coordinates
+        const phi = Math.acos(-normalizedPoint.y); // 0 to PI
+        const theta = Math.atan2(-normalizedPoint.x, normalizedPoint.z); // -PI to PI
         
-        // Add marker at clicked position
-        addMarker(intersectionPoint, latitude, longitude);
+        // Convert to lat/lng
+        const latitude = (Math.PI / 2 - phi) * (180 / Math.PI);
+        const longitude = theta * (180 / Math.PI);
         
-        // Get weather data for the location
-        getWeatherData(latitude, longitude);
+        console.log('Clicked coordinates:', { latitude, longitude, point: intersectionPoint });
         
-        // Update info panel
-        updateLocationInfo(latitude, longitude);
-        
-        // Show info panel
-        document.getElementById('info-panel').classList.add('active');
-    }
-}
-
-function onGlobeHover(event) {
-    if (isLoading) return;
-    
-    // Calculate mouse position in normalized device coordinates
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    
-    // Update the picking ray with the camera and mouse position
-    raycaster.setFromCamera(mouse, camera);
-    
-    // Calculate objects intersecting the picking ray
-    const intersects = raycaster.intersectObject(globe);
-    
-    if (intersects.length > 0) {
-        document.body.style.cursor = 'pointer';
+        // Add pin at clicked position
+        addPin(intersectionPoint, latitude, longitude);
     } else {
-        document.body.style.cursor = 'default';
+        console.log('No intersection with globe found');
     }
 }
 
-function addMarker(position, latitude, longitude) {
-    // Remove previous markers
-    markers.forEach(marker => scene.remove(marker));
-    markers = [];
+// Removed hover function - no cursor changes on hover
+
+function addPin(position, latitude, longitude) {
+    // Remove previous pins and buttons
+    removeCurrentPin();
     
-    // Create marker geometry
-    const markerGeometry = new THREE.SphereGeometry(MARKER_SIZE, 16, 16);
-    const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff4444 });
-    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-    
-    // Position marker slightly above the globe surface
-    marker.position.copy(position.normalize().multiplyScalar(GLOBE_RADIUS + 0.05));
-    marker.userData.latitude = latitude;
-    marker.userData.longitude = longitude;
-    
-    // Add marker to scene
-    scene.add(marker);
-    markers.push(marker);
-    
-    // Create pulse effect
-    const pulseGeometry = new THREE.SphereGeometry(MARKER_SIZE * 1.2, 16, 16);
-    const pulseMaterial = new THREE.MeshBasicMaterial({
-        color: 0xff4444,
-        transparent: true,
-        opacity: 0.4
+    // Create pin group with material
+    const pinGroup = createPinGeometry();
+    const pinMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0xff3333,
+        shininess: 100,
+        specular: 0x222222
     });
     
-    const pulse = new THREE.Mesh(pulseGeometry, pulseMaterial);
-    pulse.position.copy(marker.position);
-    scene.add(pulse);
-    markers.push(pulse);
+    // Apply material to all parts
+    pinGroup.children.forEach(child => {
+        child.material = pinMaterial.clone();
+    });
     
-    // Animate pulse
-    animatePulse(pulse);
+    // Position pin on globe surface
+    const pinPosition = position.clone().normalize().multiplyScalar(GLOBE_RADIUS + 0.2);
+    pinGroup.position.copy(pinPosition);
+    
+    // Orient pin to point outward from globe center
+    pinGroup.lookAt(pinPosition.clone().add(pinPosition.clone().normalize()));
+    
+    pinGroup.userData.latitude = latitude;
+    pinGroup.userData.longitude = longitude;
+    
+    // Add pin to scene
+    scene.add(pinGroup);
+    currentPin = pinGroup;
+    
+    console.log('Pin created at:', { position: pinPosition, latitude, longitude });
+    
+    // Create details button in DOM
+    createDetailsButton(pinGroup);
+    
+    // Add pin drop animation
+    animatePinDrop(pinGroup);
 }
 
-function animatePulse(pulse) {
-    const startScale = 1;
-    const endScale = 2;
-    const duration = 1500; // ms
-    const startTime = Date.now();
+function createPinGeometry() {
+    // Create a better pin with multiple parts
+    const group = new THREE.Group();
     
-    function updatePulse() {
-        const elapsed = Date.now() - startTime;
-        const progress = (elapsed % duration) / duration;
-        
-        const scale = startScale + (endScale - startScale) * progress;
-        pulse.scale.set(scale, scale, scale);
-        
-        pulse.material.opacity = 0.4 * (1 - progress);
-        
-        requestAnimationFrame(updatePulse);
+    // Pin head (sphere at top)
+    const headGeometry = new THREE.SphereGeometry(0.06, 16, 16);
+    const head = new THREE.Mesh(headGeometry);
+    head.position.y = 0.15;
+    group.add(head);
+    
+    // Pin body (cylinder)
+    const bodyGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.3, 8);
+    const body = new THREE.Mesh(bodyGeometry);
+    body.position.y = 0;
+    group.add(body);
+    
+    // Pin tip (small cone at bottom)
+    const tipGeometry = new THREE.ConeGeometry(0.02, 0.08, 8);
+    const tip = new THREE.Mesh(tipGeometry);
+    tip.position.y = -0.19;
+    group.add(tip);
+    
+    return group;
+}
+
+function removeCurrentPin() {
+    if (currentPin) {
+        scene.remove(currentPin);
+        currentPin = null;
     }
     
-    updatePulse();
+    if (detailsButton) {
+        detailsButton.remove();
+        detailsButton = null;
+    }
+    
+    // Also remove old markers for backward compatibility
+    markers.forEach(marker => scene.remove(marker));
+    markers = [];
+}
+
+function animatePinDrop(pin) {
+    const startY = pin.position.y + 2;
+    const endY = pin.position.y;
+    const startTime = Date.now();
+    const duration = 800; // ms
+    
+    pin.position.y = startY;
+    pin.scale.set(0.1, 0.1, 0.1);
+    
+    function updateDrop() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function for bounce effect
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const bounce = Math.sin(progress * Math.PI * 2) * 0.1 * (1 - progress);
+        
+        pin.position.y = startY + (endY - startY) * easeOut + bounce;
+        
+        // Scale animation
+        const scale = 0.1 + (0.9 * easeOut);
+        pin.scale.set(scale, scale, scale);
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateDrop);
+        }
+    }
+    
+    updateDrop();
+}
+
+function createDetailsButton(pin) {
+    // Create button element
+    const button = document.createElement('div');
+    button.className = 'details-button';
+    button.innerHTML = `
+        <div class="button-content">
+            <i class="fas fa-info-circle"></i>
+            <span>View Details</span>
+        </div>
+    `;
+    
+    // Position button
+    button.style.position = 'absolute';
+    button.style.transform = 'translate(-50%, -50%)';
+    button.style.pointerEvents = 'auto';
+    button.style.zIndex = '100';
+    
+    // Add click event
+    button.addEventListener('click', () => {
+        showDetailedInfo(pin.userData.latitude, pin.userData.longitude);
+    });
+    
+    // Add to DOM
+    document.body.appendChild(button);
+    detailsButton = button;
+    
+    // Start button position updates
+    updateButtonPosition();
+}
+
+function updateButtonPosition() {
+    if (!currentPin || !detailsButton) return;
+    
+    // Project 3D position to screen coordinates
+    const vector = currentPin.position.clone();
+    vector.project(camera);
+    
+    // Convert to screen coordinates
+    const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+    const y = (vector.y * -0.5 + 0.5) * window.innerHeight;
+    
+    // Update button position
+    detailsButton.style.left = x + 'px';
+    detailsButton.style.top = (y - 40) + 'px';
+    
+    // Hide button if pin is behind the globe
+    const distance = camera.position.distanceTo(currentPin.position);
+    const globeDistance = camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
+    detailsButton.style.opacity = distance < globeDistance + 1 ? '1' : '0';
 }
 
 function getWeatherData(latitude, longitude) {
@@ -467,12 +620,22 @@ function updateLocationInfo(latitude, longitude) {
     document.getElementById('latitude').textContent = latitude.toFixed(4) + '°';
     document.getElementById('longitude').textContent = longitude.toFixed(4) + '°';
     
-    // Calculate and display local time
-    const date = new Date();
-    const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
-    const localTime = new Date(utcTime + (3600000 * (longitude / 15)));
+    // Get current UTC time
+    const utcNow = new Date();
     
-    document.getElementById('local-time').textContent = localTime.toLocaleTimeString();
+    // Calculate approximate local time based on longitude (rough estimate)
+    const timeZoneOffsetHours = Math.round(longitude / 15); // Each 15° = 1 hour
+    const localTime = new Date(utcNow.getTime() + (timeZoneOffsetHours * 3600000));
+    
+    // Display the time
+    document.getElementById('local-time').textContent = localTime.toLocaleTimeString([], {
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit'
+    }) + ` (UTC${timeZoneOffsetHours >= 0 ? '+' : ''}${timeZoneOffsetHours})`;
+    
+    // Also try to get location name from reverse geocoding
+    getReverseGeocodingInfo(latitude, longitude);
 }
 
 function searchLocation() {
@@ -509,17 +672,8 @@ function searchLocation() {
             
             const position = new THREE.Vector3(x, y, z);
             
-            // Add marker
-            addMarker(position, latitude, longitude);
-            
-            // Get weather data
-            getWeatherData(latitude, longitude);
-            
-            // Update info panel
-            updateLocationInfo(latitude, longitude);
-            
-            // Show info panel
-            document.getElementById('info-panel').classList.add('active');
+            // Add pin
+            addPin(position, latitude, longitude);
             
             // Rotate globe to show the location
             rotateGlobeToPosition(position);
@@ -569,11 +723,304 @@ function rotateGlobeToPosition(position) {
     updateRotation();
 }
 
+function showDetailedInfo(latitude, longitude) {
+    // Create detailed modal overlay
+    const modal = document.createElement('div');
+    modal.className = 'detailed-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Location Details</h2>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-left">
+                    <div class="mini-globe-container">
+                        <div id="mini-globe"></div>
+                        <div class="coordinates-display">
+                            <p><i class="fas fa-map-marker-alt"></i> ${latitude.toFixed(4)}°, ${longitude.toFixed(4)}°</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-right">
+                    <div class="info-section">
+                        <h3><i class="fas fa-cloud-sun"></i> Weather Information</h3>
+                        <div id="detailed-weather" class="loading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading detailed weather data...</p>
+                        </div>
+                    </div>
+                    <div class="info-section">
+                        <h3><i class="fas fa-clock"></i> Time & Date</h3>
+                        <div id="time-info">
+                            <div class="time-display">
+                                <div class="local-time">
+                                    <span class="time-label">Local Time</span>
+                                    <span class="time-value" id="detailed-local-time">--:--</span>
+                                    <span class="timezone-info" id="timezone-offset">UTC+0</span>
+                                </div>
+                                <div class="utc-time">
+                                    <span class="time-label">UTC Time</span>
+                                    <span class="time-value" id="detailed-utc-time">--:--</span>
+                                </div>
+                            </div>
+                            <div class="date-info">
+                                <div class="current-date">
+                                    <span class="date-label">Current Date</span>
+                                    <span class="date-value" id="current-date"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to DOM
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    modal.querySelector('.close-modal').addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Initialize mini globe
+    initMiniGlobe(latitude, longitude);
+    
+    // Load detailed weather data
+    loadDetailedWeatherData(latitude, longitude);
+    
+    // Update time displays
+    updateTimeDisplays(longitude);
+}
+
+function initMiniGlobe(latitude, longitude) {
+    const container = document.getElementById('mini-globe');
+    const size = 200;
+    
+    // Create mini scene
+    const miniScene = new THREE.Scene();
+    const miniCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    const miniRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    
+    miniRenderer.setSize(size, size);
+    miniRenderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(miniRenderer.domElement);
+    
+    // Create mini globe
+    const textureLoader = new THREE.TextureLoader();
+    const earthTexture = textureLoader.load(EARTH_TEXTURE_PATH);
+    
+    const globeGeometry = new THREE.SphereGeometry(2, 32, 32);
+    const globeMaterial = new THREE.MeshPhongMaterial({ map: earthTexture });
+    const miniGlobe = new THREE.Mesh(globeGeometry, globeMaterial);
+    miniScene.add(miniGlobe);
+    
+    // Add lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+    miniScene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 3, 5);
+    miniScene.add(directionalLight);
+    
+    // Position camera to show the selected location
+    miniCamera.position.set(0, 0, 6);
+    
+    // Rotate globe to show the location
+    const phi = (90 - latitude) * (Math.PI / 180);
+    const theta = (longitude + 180) * (Math.PI / 180);
+    miniGlobe.rotation.y = -theta;
+    miniGlobe.rotation.x = phi - Math.PI / 2;
+    
+    // Add location marker
+    const markerGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+    const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+    
+    const markerPosition = new THREE.Vector3();
+    markerPosition.setFromSphericalCoords(2.05, phi, theta);
+    marker.position.copy(markerPosition);
+    miniScene.add(marker);
+    
+    // Animation loop for mini globe
+    function animateMini() {
+        requestAnimationFrame(animateMini);
+        miniGlobe.rotation.y += 0.005;
+        miniRenderer.render(miniScene, miniCamera);
+    }
+    animateMini();
+}
+
+function loadDetailedWeatherData(latitude, longitude) {
+    const weatherContainer = document.getElementById('detailed-weather');
+    
+    fetch(`${WEATHER_API_URL}?lat=${latitude}&lon=${longitude}&units=metric&appid=${WEATHER_API_KEY}`)
+        .then(response => response.json())
+        .then(current => {
+            weatherContainer.innerHTML = `
+                <div class="current-weather">
+                    <div class="weather-main">
+                        <i class="weather-icon fas ${getWeatherIcon(current.weather[0].id)}"></i>
+                        <div class="temp-info">
+                            <span class="temperature">${Math.round(current.main.temp)}°C</span>
+                            <span class="feels-like">Feels like ${Math.round(current.main.feels_like)}°C</span>
+                        </div>
+                    </div>
+                    <p class="weather-description">${current.weather[0].description}</p>
+                    
+                    <div class="weather-details-grid">
+                        <div class="detail-item">
+                            <i class="fas fa-tint"></i>
+                            <span class="label">Humidity</span>
+                            <span class="value">${current.main.humidity}%</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-wind"></i>
+                            <span class="label">Wind</span>
+                            <span class="value">${current.wind.speed} m/s</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-compress-alt"></i>
+                            <span class="label">Pressure</span>
+                            <span class="value">${current.main.pressure} hPa</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-eye"></i>
+                            <span class="label">Visibility</span>
+                            <span class="value">${(current.visibility / 1000).toFixed(1)} km</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-thermometer-three-quarters"></i>
+                            <span class="label">Min/Max</span>
+                            <span class="value">${Math.round(current.main.temp_min)}°/${Math.round(current.main.temp_max)}°</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-cloud"></i>
+                            <span class="label">Clouds</span>
+                            <span class="value">${current.clouds.all}%</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            weatherContainer.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Error loading weather data</p>
+                </div>
+            `;
+        });
+}
+
+function updateTimeDisplays(longitude) {
+    const utcNow = new Date();
+    
+    // Calculate approximate local time offset
+    const timeZoneOffsetHours = Math.round(longitude / 15);
+    const localTime = new Date(utcNow.getTime() + (timeZoneOffsetHours * 3600000));
+    
+    // Format times properly
+    const localTimeStr = localTime.toLocaleTimeString([], {
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false
+    });
+    
+    const utcTimeStr = utcNow.toLocaleTimeString([], {
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'UTC'
+    });
+    
+    document.getElementById('detailed-local-time').textContent = localTimeStr;
+    document.getElementById('detailed-utc-time').textContent = utcTimeStr;
+    
+    // Update timezone offset display
+    const timezoneElement = document.getElementById('timezone-offset');
+    if (timezoneElement) {
+        timezoneElement.textContent = `UTC${timeZoneOffsetHours >= 0 ? '+' : ''}${timeZoneOffsetHours}`;
+    }
+    
+    // Update current date
+    const currentDateElement = document.getElementById('current-date');
+    if (currentDateElement) {
+        const dateStr = localTime.toLocaleDateString([], {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        currentDateElement.textContent = dateStr;
+    }
+}
+
+function toggleDragMode() {
+    dragOnlyMode = !dragOnlyMode;
+    const button = document.getElementById('drag-mode-toggle');
+    const icon = button.querySelector('i');
+    const text = button.querySelector('.drag-mode-text');
+    
+    if (dragOnlyMode) {
+        icon.className = 'fas fa-lock';
+        text.textContent = 'Drag Only';
+        button.classList.add('active');
+        renderer.domElement.style.cursor = 'grab';
+    } else {
+        icon.className = 'fas fa-unlock';
+        text.textContent = 'Click Mode';
+        button.classList.remove('active');
+        renderer.domElement.style.cursor = 'crosshair';
+    }
+}
+
+function getReverseGeocodingInfo(latitude, longitude) {
+    // Get location name from coordinates
+    fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${WEATHER_API_KEY}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                const location = data[0];
+                const locationName = `${location.name}${location.state ? ', ' + location.state : ''}, ${location.country}`;
+                document.getElementById('location-name').textContent = locationName;
+                
+                // Also get weather data
+                getWeatherData(latitude, longitude);
+                
+                // Update info panel
+                updateLocationInfo(latitude, longitude);
+                
+                // Show info panel
+                document.getElementById('info-panel').classList.add('active');
+            } else {
+                document.getElementById('location-name').textContent = `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`;
+            }
+        })
+        .catch(error => {
+            console.error('Error getting location info:', error);
+            document.getElementById('location-name').textContent = `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`;
+        });
+}
+
 function animate() {
     requestAnimationFrame(animate);
     
     // Update controls
     controls.update();
+    
+    // Update button position if exists
+    if (currentPin && detailsButton) {
+        updateButtonPosition();
+    }
     
     // Rotate clouds slightly faster than the globe
     if (globe.userData.clouds) {
