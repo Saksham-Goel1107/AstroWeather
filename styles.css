@@ -402,15 +402,20 @@ body::after {
 
 /* Header */
 header {
+    /* Constrain header width so it doesn't span the full viewport */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 25px;
+    padding: 15px 30px;
     background: linear-gradient(135deg, rgba(15, 15, 35, 0.95) 0%, rgba(26, 26, 46, 0.9) 100%);
     backdrop-filter: blur(20px) saturate(180%);
     border-bottom: 1px solid rgba(102, 126, 234, 0.2);
     z-index: 10;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    max-width: 1100px; /* limit width */
+    width: calc(100% - 120px); /* give some side breathing room */
+    margin: 20px auto 0; /* center the header horizontally and add top spacing */
+    border-radius: 14px; /* rounded corners to look neat when narrower */
 }
 
 .logo {
@@ -727,7 +732,8 @@ body.light-theme .close-modal:hover {
 
 .air-quality-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    /* force two columns on wider screens for a balanced layout */
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
     gap: 12px;
 }
 
@@ -757,8 +763,16 @@ body.light-theme .close-modal:hover {
 /* Astronomical Data Styles */
 .astronomy-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    /* two-column layout by default */
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
     gap: 20px;
+}
+
+/* Generic two-column fallback for other info sections */
+.info-section .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+    gap: 16px;
 }
 
 .astro-section {
@@ -1120,8 +1134,8 @@ input:checked + .slider:before {
 .modal-content {
     background: linear-gradient(145deg, #1e1e1e 0%, #2d2d2d 100%);
     border-radius: 20px;
-    width: 90vw;
-    max-width: 900px;
+    width: 88vw;
+    max-width: 860px;
     height: 80vh;
     max-height: 600px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
@@ -1184,8 +1198,8 @@ input:checked + .slider:before {
 }
 
 .modal-left {
-    width: 300px;
-    padding: 25px;
+    width: 280px;
+    padding: 22px;
     background: rgba(255, 255, 255, 0.02);
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
@@ -1330,8 +1344,10 @@ input:checked + .slider:before {
 
 .weather-details-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
+    /* Default to two columns for clearer layout on desktop */
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    gap: 18px;
+    align-items: start;
 }
 
 .detail-item {
