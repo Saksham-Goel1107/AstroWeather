@@ -8,6 +8,11 @@ let isDragging = false;
 let currentPin = null;
 let detailsButton = null;
 let dragOnlyMode = true;
+let currentLocation = null;
+let favoriteLocations = JSON.parse(localStorage.getItem('favoriteLocations') || '[]');
+let weatherHistory = JSON.parse(localStorage.getItem('weatherHistory') || '[]');
+let userPreferences = JSON.parse(localStorage.getItem('userPreferences') || '{}');
+let soundEnabled = userPreferences.soundEnabled !== false;
 
 // Constants
 const GLOBE_RADIUS = 5;
@@ -21,10 +26,25 @@ const STARS_TEXTURE_PATH = 'https://raw.githubusercontent.com/mrdoob/three.js/de
 
 // Weather API configuration
 const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/weather';
+const FORECAST_API_URL = 'https://api.openweathermap.org/data/2.5/forecast';
+const AIR_QUALITY_API_URL = 'https://api.openweathermap.org/data/2.5/air_pollution';
+const UV_INDEX_API_URL = 'https://api.openweathermap.org/data/2.5/uvi';
 const WEATHER_API_KEY = '8b96a2858cb7d52f0cee1aac54204619'; // Hardcoded for client-side
 
 // Geocoding API configuration
 const GEOCODING_API_URL = 'https://api.openweathermap.org/geo/1.0/direct';
+const REVERSE_GEOCODING_API_URL = 'https://api.openweathermap.org/geo/1.0/reverse';
+
+// Astronomical API configuration
+const ASTRONOMY_API_URL = 'https://api.sunrise-sunset.org/json';
+const ISS_API_URL = 'http://api.open-notify.org/iss-now.json';
+
+// Audio files for sound effects
+const SOUNDS = {
+    click: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCjys5fK4bCMIl8uNi3SIe6N1kJGqqAQeFdKWqJYJJXfHi1xfXj5tJ4ShIyQIJXbLjVhf',
+    success: 'data:audio/wav;base64,UklGRt4HAABXQVZFZm1ETEQAAAABGAIAQB8AAEAfAQABAAgAZGF0YbQHAABFi8qVQjJ0nH+IuaJKbf2LYnKNxJJBL3Stf4q5oEdu+o5k',
+    notification: 'data:audio/wav;base64,UklGRjIEAABXQVZFZm10IBAAAAABAAIARKwAAIhYAQAEABAAZGF0YQ4EAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA=='
+};
 
 // Hide loading screen after everything is loaded
 window.addEventListener('load', () => {
@@ -59,8 +79,33 @@ function init() {
     // Set up event listeners
     setupEventListeners();
     
+    // Load user preferences
+    loadUserPreferences();
+    
     // Start animation loop
     animate();
+}
+
+function playSound(soundType) {
+    if (!soundEnabled) return;
+
+    try {
+        const audio = new Audio(SOUNDS[soundType]);
+        audio.volume = 0.3;
+        audio.play().catch(() => {});
+    } catch (e) {
+        console.log('Sound not available');
+    }
+}
+
+function loadUserPreferences() {
+    // Apply saved theme
+    if (userPreferences.theme === 'light') {
+        document.body.classList.add('light-theme');
+    }
+    
+    // Apply sound setting
+    soundEnabled = userPreferences.soundEnabled !== false;
 }
 
 function setupScene() {
@@ -228,7 +273,6 @@ function setupEventListeners() {
     
     document.getElementById('reset-view').addEventListener('click', resetView);
     
-    document.getElementById('day-night-toggle').addEventListener('change', toggleDayNight);
     
     document.getElementById('close-panel').addEventListener('click', () => {
         document.getElementById('info-panel').classList.remove('active');
@@ -244,6 +288,18 @@ function setupEventListeners() {
     
     // Drag mode toggle
     document.getElementById('drag-mode-toggle').addEventListener('click', toggleDragMode);
+    
+    // Theme toggle
+    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+    
+    // Sound toggle
+    document.getElementById('sound-toggle').addEventListener('click', toggleSound);
+    
+    // Fullscreen toggle
+    document.getElementById('fullscreen-toggle').addEventListener('click', toggleFullscreen);
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', handleKeyboardShortcuts);
 }
 
 function gsapZoom(delta) {
@@ -311,23 +367,6 @@ function resetView() {
     updateReset();
 }
 
-function toggleDayNight() {
-    isNightMode = document.getElementById('day-night-toggle').checked;
-    
-    if (isNightMode) {
-        globe.material.map = globe.userData.nightTexture;
-        globe.userData.clouds.material.opacity = 0.1;
-        document.body.classList.add('night-mode');
-        document.body.classList.remove('day-mode');
-    } else {
-        globe.material.map = globe.userData.dayTexture;
-        globe.userData.clouds.material.opacity = 0.4;
-        document.body.classList.add('day-mode');
-        document.body.classList.remove('night-mode');
-    }
-    
-    globe.material.needsUpdate = true;
-}
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -772,6 +811,14 @@ function showDetailedInfo(latitude, longitude) {
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="info-section">
+                        <h3><i class="fas fa-sun"></i> Astronomical Data</h3>
+                        <div id="astronomy-info" class="loading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading astronomical data...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -799,6 +846,9 @@ function showDetailedInfo(latitude, longitude) {
     
     // Update time displays
     updateTimeDisplays(longitude);
+    
+    // Load astronomical data
+    loadAstronomicalData(latitude, longitude);
 }
 
 function initMiniGlobe(latitude, longitude) {
@@ -862,10 +912,17 @@ function initMiniGlobe(latitude, longitude) {
 function loadDetailedWeatherData(latitude, longitude) {
     const weatherContainer = document.getElementById('detailed-weather');
     
-    fetch(`${WEATHER_API_URL}?lat=${latitude}&lon=${longitude}&units=metric&appid=${WEATHER_API_KEY}`)
-        .then(response => response.json())
-        .then(current => {
-            weatherContainer.innerHTML = `
+    // Load multiple weather data sources
+    Promise.all([
+        fetch(`${WEATHER_API_URL}?lat=${latitude}&lon=${longitude}&units=metric&appid=${WEATHER_API_KEY}`),
+        fetch(`${FORECAST_API_URL}?lat=${latitude}&lon=${longitude}&units=metric&appid=${WEATHER_API_KEY}`),
+        fetch(`${AIR_QUALITY_API_URL}?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}`),
+        fetch(`${UV_INDEX_API_URL}?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}`)
+    ])
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(([current, forecast, airQuality, uvIndex]) => {
+        weatherContainer.innerHTML = `
+            <div class="advanced-weather">
                 <div class="current-weather">
                     <div class="weather-main">
                         <i class="weather-icon fas ${getWeatherIcon(current.weather[0].id)}"></i>
@@ -893,14 +950,14 @@ function loadDetailedWeatherData(latitude, longitude) {
                             <span class="value">${current.main.pressure} hPa</span>
                         </div>
                         <div class="detail-item">
-                            <i class="fas fa-eye"></i>
-                            <span class="label">Visibility</span>
-                            <span class="value">${(current.visibility / 1000).toFixed(1)} km</span>
+                            <i class="fas fa-sun"></i>
+                            <span class="label">UV Index</span>
+                            <span class="value">${uvIndex.value ? Math.round(uvIndex.value) : 'N/A'}</span>
                         </div>
                         <div class="detail-item">
-                            <i class="fas fa-thermometer-three-quarters"></i>
-                            <span class="label">Min/Max</span>
-                            <span class="value">${Math.round(current.main.temp_min)}°/${Math.round(current.main.temp_max)}°</span>
+                            <i class="fas fa-leaf"></i>
+                            <span class="label">Air Quality</span>
+                            <span class="value">${getAQILabel(airQuality.list?.[0]?.main?.aqi || 0)}</span>
                         </div>
                         <div class="detail-item">
                             <i class="fas fa-cloud"></i>
@@ -909,16 +966,108 @@ function loadDetailedWeatherData(latitude, longitude) {
                         </div>
                     </div>
                 </div>
-            `;
-        })
-        .catch(error => {
-            weatherContainer.innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>Error loading weather data</p>
+                
+                <div class="forecast-section">
+                    <h4><i class="fas fa-calendar-week"></i> 7-Day Forecast</h4>
+                    <div class="forecast-list">
+                        ${generateForecastHTML(forecast)}
+                    </div>
                 </div>
-            `;
-        });
+                
+                <div class="air-quality-section">
+                    <h4><i class="fas fa-wind"></i> Air Quality Details</h4>
+                    <div class="air-quality-grid">
+                        ${generateAirQualityHTML(airQuality)}
+                    </div>
+                </div>
+            </div>
+        `;
+    })
+    .catch(error => {
+        weatherContainer.innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Error loading weather data</p>
+            </div>
+        `;
+    });
+}
+
+function getAQILabel(aqi) {
+    const labels = ['N/A', 'Good', 'Fair', 'Moderate', 'Poor', 'Very Poor'];
+    return labels[aqi] || 'N/A';
+}
+
+function generateForecastHTML(forecast) {
+    if (!forecast.list) return '<p>Forecast data unavailable</p>';
+    
+    // Group by day
+    const dailyForecasts = {};
+    forecast.list.forEach(item => {
+        const date = new Date(item.dt * 1000);
+        const dateKey = date.toDateString();
+        
+        if (!dailyForecasts[dateKey]) {
+            dailyForecasts[dateKey] = {
+                date: date,
+                temps: [],
+                weather: item.weather[0],
+                humidity: [],
+                wind: []
+            };
+        }
+        
+        dailyForecasts[dateKey].temps.push(item.main.temp);
+        dailyForecasts[dateKey].humidity.push(item.main.humidity);
+        dailyForecasts[dateKey].wind.push(item.wind.speed);
+    });
+    
+    return Object.values(dailyForecasts).slice(0, 7).map(day => {
+        const minTemp = Math.round(Math.min(...day.temps));
+        const maxTemp = Math.round(Math.max(...day.temps));
+        const avgHumidity = Math.round(day.humidity.reduce((a, b) => a + b, 0) / day.humidity.length);
+        
+        return `
+            <div class="forecast-day">
+                <div class="day-name">${day.date.toLocaleDateString([], {weekday: 'short'})}</div>
+                <i class="forecast-icon fas ${getWeatherIcon(day.weather.id)}"></i>
+                <div class="temp-range">${minTemp}° - ${maxTemp}°</div>
+                <div class="humidity">${avgHumidity}% humidity</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function generateAirQualityHTML(airQuality) {
+    if (!airQuality.list?.[0]) return '<p>Air quality data unavailable</p>';
+    
+    const components = airQuality.list[0].components;
+    return `
+        <div class="aqi-item">
+            <span class="aqi-label">CO</span>
+            <span class="aqi-value">${components.co?.toFixed(2) || 'N/A'} μg/m³</span>
+        </div>
+        <div class="aqi-item">
+            <span class="aqi-label">NO₂</span>
+            <span class="aqi-value">${components.no2?.toFixed(2) || 'N/A'} μg/m³</span>
+        </div>
+        <div class="aqi-item">
+            <span class="aqi-label">O₃</span>
+            <span class="aqi-value">${components.o3?.toFixed(2) || 'N/A'} μg/m³</span>
+        </div>
+        <div class="aqi-item">
+            <span class="aqi-label">PM2.5</span>
+            <span class="aqi-value">${components.pm2_5?.toFixed(2) || 'N/A'} μg/m³</span>
+        </div>
+        <div class="aqi-item">
+            <span class="aqi-label">PM10</span>
+            <span class="aqi-value">${components.pm10?.toFixed(2) || 'N/A'} μg/m³</span>
+        </div>
+        <div class="aqi-item">
+            <span class="aqi-label">SO₂</span>
+            <span class="aqi-value">${components.so2?.toFixed(2) || 'N/A'} μg/m³</span>
+        </div>
+    `;
 }
 
 function updateTimeDisplays(longitude) {
@@ -1008,6 +1157,193 @@ function getReverseGeocodingInfo(latitude, longitude) {
         .catch(error => {
             console.error('Error getting location info:', error);
             document.getElementById('location-name').textContent = `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`;
+        });
+}
+
+function toggleTheme() {
+    playSound('click');
+    document.body.classList.toggle('light-theme');
+    userPreferences.theme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+    localStorage.setItem('userPreferences', JSON.stringify(userPreferences));
+    
+    const icon = document.querySelector('#theme-toggle i');
+    icon.className = userPreferences.theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    userPreferences.soundEnabled = soundEnabled;
+    localStorage.setItem('userPreferences', JSON.stringify(userPreferences));
+    
+    const icon = document.querySelector('#sound-toggle i');
+    icon.className = soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+    
+    if (soundEnabled) playSound('success');
+}
+
+function toggleFullscreen() {
+    playSound('click');
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+function handleKeyboardShortcuts(event) {
+    if (event.ctrlKey || event.metaKey) {
+        switch (event.key.toLowerCase()) {
+            case 'l':
+                event.preventDefault();
+                getCurrentLocation();
+                break;
+            case 't':
+                event.preventDefault();
+                toggleTheme();
+                break;
+            case 'm':
+                event.preventDefault();
+                toggleSound();
+                break;
+            case 'f':
+                event.preventDefault();
+                toggleFullscreen();
+                break;
+            case 'd':
+                event.preventDefault();
+                toggleDragMode();
+                break;
+        }
+    }
+    
+    // ESC key
+    if (event.key === 'Escape') {
+        const modal = document.querySelector('.detailed-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+}
+
+function getAstronomicalData(latitude, longitude) {
+    return fetch(`${ASTRONOMY_API_URL}?lat=${latitude}&lng=${longitude}&formatted=0`)
+        .then(response => response.json())
+        .then(data => {
+            const sunrise = new Date(data.results.sunrise);
+            const sunset = new Date(data.results.sunset);
+            const solarNoon = new Date(data.results.solar_noon);
+            const dayLength = data.results.day_length;
+            
+            return {
+                sunrise: sunrise.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                sunset: sunset.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                solarNoon: solarNoon.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                dayLength: formatDuration(dayLength),
+                civilTwilight: {
+                    begin: new Date(data.results.civil_twilight_begin).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                    end: new Date(data.results.civil_twilight_end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                }
+            };
+        })
+        .catch(() => ({
+            sunrise: 'N/A',
+            sunset: 'N/A',
+            solarNoon: 'N/A',
+            dayLength: 'N/A',
+            civilTwilight: { begin: 'N/A', end: 'N/A' }
+        }));
+}
+
+function formatDuration(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}h ${minutes}m`;
+}
+
+function getMoonPhase() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const day = today.getDate();
+    
+    // Simplified moon phase calculation
+    const totalDays = Math.floor((year - 2000) * 365.25) + Math.floor((month - 1) * 30.44) + day;
+    const moonCycle = totalDays % 29.53;
+    
+    if (moonCycle < 1.84566) return { name: 'New Moon', icon: 'fas fa-circle', emoji: '🌑' };
+    else if (moonCycle < 5.53699) return { name: 'Waxing Crescent', icon: 'fas fa-circle', emoji: '🌒' };
+    else if (moonCycle < 9.22831) return { name: 'First Quarter', icon: 'fas fa-circle', emoji: '🌓' };
+    else if (moonCycle < 12.91963) return { name: 'Waxing Gibbous', icon: 'fas fa-circle', emoji: '🌔' };
+    else if (moonCycle < 16.61096) return { name: 'Full Moon', icon: 'fas fa-circle', emoji: '🌕' };
+    else if (moonCycle < 20.30228) return { name: 'Waning Gibbous', icon: 'fas fa-circle', emoji: '🌖' };
+    else if (moonCycle < 23.99361) return { name: 'Last Quarter', icon: 'fas fa-circle', emoji: '🌗' };
+    else return { name: 'Waning Crescent', icon: 'fas fa-circle', emoji: '🌘' };
+}
+
+function loadAstronomicalData(latitude, longitude) {
+    const astronomyContainer = document.getElementById('astronomy-info');
+    
+    getAstronomicalData(latitude, longitude)
+        .then(astroData => {
+            const moonPhase = getMoonPhase();
+            
+            astronomyContainer.innerHTML = `
+                <div class="astronomy-grid">
+                    <div class="astro-section">
+                        <h5><i class="fas fa-sun"></i> Sun</h5>
+                        <div class="astro-details">
+                            <div class="astro-item">
+                                <span class="astro-label">Sunrise</span>
+                                <span class="astro-value">${astroData.sunrise}</span>
+                            </div>
+                            <div class="astro-item">
+                                <span class="astro-label">Sunset</span>
+                                <span class="astro-value">${astroData.sunset}</span>
+                            </div>
+                            <div class="astro-item">
+                                <span class="astro-label">Solar Noon</span>
+                                <span class="astro-value">${astroData.solarNoon}</span>
+                            </div>
+                            <div class="astro-item">
+                                <span class="astro-label">Day Length</span>
+                                <span class="astro-value">${astroData.dayLength}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="astro-section">
+                        <h5><i class="fas fa-moon"></i> Moon</h5>
+                        <div class="astro-details">
+                            <div class="moon-phase">
+                                <span class="moon-emoji">${moonPhase.emoji}</span>
+                                <span class="moon-name">${moonPhase.name}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="astro-section">
+                        <h5><i class="fas fa-clock"></i> Twilight</h5>
+                        <div class="astro-details">
+                            <div class="astro-item">
+                                <span class="astro-label">Civil Dawn</span>
+                                <span class="astro-value">${astroData.civilTwilight.begin}</span>
+                            </div>
+                            <div class="astro-item">
+                                <span class="astro-label">Civil Dusk</span>
+                                <span class="astro-value">${astroData.civilTwilight.end}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(() => {
+            astronomyContainer.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Astronomical data unavailable</p>
+                </div>
+            `;
         });
 }
 
