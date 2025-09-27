@@ -79,9 +79,6 @@ function init() {
     // Set up event listeners
     setupEventListeners();
     
-    // Initialize GPS location
-    initializeGPS();
-    
     // Load user preferences
     loadUserPreferences();
     
@@ -91,7 +88,7 @@ function init() {
 
 function playSound(soundType) {
     if (!soundEnabled) return;
-    
+
     try {
         const audio = new Audio(SOUNDS[soundType]);
         audio.volume = 0.3;
@@ -99,65 +96,6 @@ function playSound(soundType) {
     } catch (e) {
         console.log('Sound not available');
     }
-}
-
-function initializeGPS() {
-    if ('geolocation' in navigator) {
-        const gpsButton = document.createElement('button');
-        gpsButton.id = 'gps-button';
-        gpsButton.className = 'gps-btn';
-        gpsButton.innerHTML = '<i class="fas fa-location-arrow"></i><span>My Location</span>';
-        gpsButton.addEventListener('click', getCurrentLocation);
-        
-        document.querySelector('.controls').appendChild(gpsButton);
-    }
-}
-
-function getCurrentLocation() {
-    playSound('click');
-    const gpsButton = document.getElementById('gps-button');
-    const icon = gpsButton.querySelector('i');
-    
-    icon.className = 'fas fa-spinner fa-spin';
-    gpsButton.disabled = true;
-    
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            
-            // Calculate position on globe
-            const phi = (90 - lat) * (Math.PI / 180);
-            const theta = (lng + 180) * (Math.PI / 180);
-            
-            const x = -GLOBE_RADIUS * Math.sin(phi) * Math.cos(theta);
-            const y = GLOBE_RADIUS * Math.cos(phi);
-            const z = GLOBE_RADIUS * Math.sin(phi) * Math.sin(theta);
-            
-            const position3D = new THREE.Vector3(x, y, z);
-            
-            // Add pin and get weather
-            addPin(position3D, lat, lng);
-            rotateGlobeToPosition(position3D);
-            
-            playSound('success');
-            icon.className = 'fas fa-location-arrow';
-            gpsButton.disabled = false;
-            
-            currentLocation = { lat, lng };
-        },
-        (error) => {
-            console.error('GPS Error:', error);
-            alert('Unable to get your location. Please check your browser settings.');
-            icon.className = 'fas fa-location-arrow';
-            gpsButton.disabled = false;
-        },
-        {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 300000
-        }
-    );
 }
 
 function loadUserPreferences() {
@@ -335,7 +273,6 @@ function setupEventListeners() {
     
     document.getElementById('reset-view').addEventListener('click', resetView);
     
-    document.getElementById('day-night-toggle').addEventListener('change', toggleDayNight);
     
     document.getElementById('close-panel').addEventListener('click', () => {
         document.getElementById('info-panel').classList.remove('active');
@@ -430,23 +367,6 @@ function resetView() {
     updateReset();
 }
 
-function toggleDayNight() {
-    isNightMode = document.getElementById('day-night-toggle').checked;
-    
-    if (isNightMode) {
-        globe.material.map = globe.userData.nightTexture;
-        globe.userData.clouds.material.opacity = 0.1;
-        document.body.classList.add('night-mode');
-        document.body.classList.remove('day-mode');
-    } else {
-        globe.material.map = globe.userData.dayTexture;
-        globe.userData.clouds.material.opacity = 0.4;
-        document.body.classList.add('day-mode');
-        document.body.classList.remove('night-mode');
-    }
-    
-    globe.material.needsUpdate = true;
-}
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
