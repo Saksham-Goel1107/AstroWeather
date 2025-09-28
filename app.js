@@ -1572,3 +1572,772 @@ function animate() {
     // Render scene
     renderer.render(scene, camera);
 }
+
+// Weather Prediction System for Indian Cities
+// Ported from Python ML model
+
+// Indian city climate characteristics
+const CLIMATE_DATA = {
+    'delhi': {
+        base_temp_max: 28, base_temp_min: 18, rain_prob: 0.25,
+        common_weather: ['clear', 'haze', 'rain', 'thunderstorm', 'fog'],
+        seasonal_variation: 12
+    },
+    'mumbai': {
+        base_temp_max: 30, base_temp_min: 24, rain_prob: 0.35,
+        common_weather: ['clear', 'rain', 'thunderstorm', 'haze', 'clouds'],
+        seasonal_variation: 6
+    },
+    'bangalore': {
+        base_temp_max: 26, base_temp_min: 19, rain_prob: 0.30,
+        common_weather: ['clear', 'clouds', 'rain', 'thunderstorm', 'mist'],
+        seasonal_variation: 8
+    },
+    'kolkata': {
+        base_temp_max: 29, base_temp_min: 21, rain_prob: 0.40,
+        common_weather: ['clear', 'haze', 'rain', 'thunderstorm', 'clouds'],
+        seasonal_variation: 10
+    },
+    'chennai': {
+        base_temp_max: 32, base_temp_min: 26, rain_prob: 0.20,
+        common_weather: ['clear', 'clouds', 'rain', 'haze', 'thunderstorm'],
+        seasonal_variation: 4
+    }
+};
+
+function analyzeWeatherPatterns(currentData, forecastData) {
+    const patterns = {
+        avg_temp: currentData.main.temp,
+        humidity: currentData.main.humidity,
+        pressure: currentData.main.pressure,
+        weather_type: currentData.weather[0].main.toLowerCase(),
+        wind_speed: currentData.wind.speed,
+        temp_variations: [],
+        temp_trend: 0
+    };
+    
+    // Analyze forecast patterns
+    if (forecastData && forecastData.list) {
+        const temps = forecastData.list.slice(0, 8).map(item => item.main.temp);
+        patterns.temp_variations = temps;
+        
+        // Calculate temperature trend
+        if (temps.length > 1) {
+            let trend = 0;
+            for (let i = 1; i < temps.length; i++) {
+                trend += temps[i] - temps[i-1];
+            }
+            patterns.temp_trend = trend / (temps.length - 1);
+        }
+    }
+    
+    return patterns;
+}
+
+function predictWeatherMLBased(patterns, days, cityClimate) {
+    const cityData = CLIMATE_DATA[cityClimate.toLowerCase()] || CLIMATE_DATA['delhi'];
+    
+    const predictedTempsMax = [];
+    const predictedTempsMin = [];
+    const predictedWeather = [];
+    const predictedPrecipitation = [];
+    
+    const currentTemp = patterns.avg_temp;
+    const currentWeather = patterns.weather_type;
+    const humidity = patterns.humidity;
+    
+    for (let day = 0; day < days; day++) {
+        // Temperature prediction based on real data + seasonal patterns
+        const now = new Date();
+        const futureDate = new Date(now.getTime() + (day + 1) * 24 * 60 * 60 * 1000);
+        const dayOfYear = Math.floor((futureDate - new Date(futureDate.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+        
+        // Seasonal adjustment
+        const seasonalFactor = cityData.seasonal_variation * Math.sin(2 * Math.PI * dayOfYear / 365 - Math.PI/2);
+        
+        // Weather persistence (real weather tends to persist)
+        const weatherPersistence = day < 3 ? 0.7 : 0.3;
+        
+        // Predict weather based on current conditions and city patterns
+        let weather;
+        if (Math.random() < weatherPersistence && day < 3) {
+            weather = currentWeather;
+        } else {
+            // Use city-specific weather patterns with weighted probabilities
+            const weatherProbs = [0.4, 0.25, 0.15, 0.12, 0.08];
+            const rand = Math.random();
+            let cumulative = 0;
+            for (let i = 0; i < weatherProbs.length; i++) {
+                cumulative += weatherProbs[i];
+                if (rand <= cumulative) {
+                    weather = cityData.common_weather[i];
+                    break;
+                }
+            }
+            weather = weather || cityData.common_weather[0];
+        }
+        
+        predictedWeather.push(weather);
+        
+        // Temperature prediction
+        const baseAdjustment = (currentTemp - cityData.base_temp_max) * 0.3;
+        const trendAdjustment = (patterns.temp_trend || 0) * day * 0.1;
+        
+        // Weather-based temperature adjustment
+        const weatherTempEffects = {
+            'clear': 2, 'sunny': 2,
+            'rain': -3, 'thunderstorm': -4,
+            'clouds': -1, 'haze': 0, 'mist': -1, 'fog': -2
+        };
+        
+        const tempEffect = weatherTempEffects[weather] || 0;
+        
+        // Generate noise (normal distribution approximation)
+        const noise = (Math.random() + Math.random() + Math.random() + Math.random() + Math.random() + Math.random() - 3) * 2;
+        
+        let tempMax = cityData.base_temp_max + seasonalFactor + baseAdjustment + trendAdjustment + tempEffect + noise;
+        let tempMin = cityData.base_temp_min + seasonalFactor + baseAdjustment + trendAdjustment + tempEffect + noise * 0.5 - 3;
+        
+        // Ensure min < max
+        if (tempMin >= tempMax) {
+            tempMin = tempMax - 4;
+        }
+            
+        predictedTempsMax.push(tempMax);
+        predictedTempsMin.push(tempMin);
+        
+        // Precipitation prediction based on weather and humidity
+        let precip = 0;
+        if (['rain', 'thunderstorm'].includes(weather)) {
+            const baseRain = 5 + (humidity - 50) * 0.2;
+            precip = Math.max(0, baseRain + Math.random() * 15);
+        } else if (['clouds', 'haze'].includes(weather) && humidity > 70) {
+            precip = Math.random() * 5;
+        }
+            
+        predictedPrecipitation.push(precip);
+    }
+    
+    return {
+        tempsMax: predictedTempsMax,
+        tempsMin: predictedTempsMin,
+        weather: predictedWeather,
+        precipitation: predictedPrecipitation
+    };
+}
+
+function createPredictionPanel() {
+    const panel = document.createElement('div');
+    panel.id = 'prediction-panel';
+    panel.className = 'prediction-panel';
+    panel.innerHTML = `
+        <div class="prediction-header">
+            <h3><i class="fas fa-chart-line"></i> Weather Predictions</h3>
+            <button class="close-prediction-btn" title="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="prediction-content">
+            <div class="prediction-controls">
+                <select id="prediction-city">
+                    <option value="delhi">Delhi</option>
+                    <option value="mumbai">Mumbai</option>
+                    <option value="bangalore">Bangalore</option>
+                    <option value="kolkata">Kolkata</option>
+                    <option value="chennai">Chennai</option>
+                </select>
+                <select id="prediction-days">
+                    <option value="1">1 Day</option>
+                    <option value="3">3 Days</option>
+                    <option value="7" selected>7 Days</option>
+                    <option value="10">10 Days</option>
+                    <option value="15">15 Days</option>
+                </select>
+                <button id="generate-prediction-btn" class="generate-prediction-btn">
+                    <i class="fas fa-magic"></i> Predict
+                </button>
+            </div>
+            <div id="prediction-results" class="prediction-results">
+                <p class="prediction-placeholder">Select a city and click "Predict" to see weather forecasts</p>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(panel);
+    
+    // Add event listeners
+    document.querySelector('.close-prediction-btn').addEventListener('click', () => {
+        panel.style.display = 'none';
+    });
+    
+    document.getElementById('generate-prediction-btn').addEventListener('click', generatePredictions);
+    
+    return panel;
+}
+
+async function generatePredictions() {
+    const citySelect = document.getElementById('prediction-city');
+    const daysSelect = document.getElementById('prediction-days');
+    const resultsDiv = document.getElementById('prediction-results');
+    const btn = document.getElementById('generate-prediction-btn');
+    
+    const city = citySelect.value;
+    const days = parseInt(daysSelect.value);
+    
+    // Show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Predicting...';
+    resultsDiv.innerHTML = '<p class="loading">Analyzing weather patterns...</p>';
+    
+    try {
+        // Get current weather data for the selected city
+        const apiCityNames = {
+            'delhi': 'New Delhi',
+            'mumbai': 'Mumbai',
+            'bangalore': 'Bengaluru',
+            'kolkata': 'Kolkata',
+            'chennai': 'Chennai'
+        };
+        
+        const apiCityName = apiCityNames[city] || city;
+        
+        // Fetch current weather
+        const currentResponse = await fetch(`${WEATHER_API_URL}?q=${apiCityName},IN&appid=${WEATHER_API_KEY}&units=metric`);
+        const currentData = await currentResponse.json();
+        
+        // Fetch forecast
+        const forecastResponse = await fetch(`${FORECAST_API_URL}?q=${apiCityName},IN&appid=${WEATHER_API_KEY}&units=metric`);
+        const forecastData = await forecastResponse.json();
+        
+        if (!currentResponse.ok || !forecastResponse.ok) {
+            throw new Error('Failed to fetch weather data');
+        }
+        
+        // Analyze patterns
+        const patterns = analyzeWeatherPatterns(currentData, forecastData);
+        
+        // Generate predictions
+        const predictions = predictWeatherMLBased(patterns, days, city);
+        
+        // Calculate statistics
+        const avgTempMax = predictions.tempsMax.reduce((a, b) => a + b, 0) / predictions.tempsMax.length;
+        const avgTempMin = predictions.tempsMin.reduce((a, b) => a + b, 0) / predictions.tempsMin.length;
+        const avgTemp = (avgTempMax + avgTempMin) / 2;
+        const totalPrecipitation = predictions.precipitation.reduce((a, b) => a + b, 0);
+        
+        // Weather distribution
+        const weatherCounts = {};
+        predictions.weather.forEach(w => {
+            weatherCounts[w] = (weatherCounts[w] || 0) + 1;
+        });
+        const mostCommonWeather = Object.keys(weatherCounts).reduce((a, b) => weatherCounts[a] > weatherCounts[b] ? a : b);
+        
+        // Display results
+        let html = `
+            <div class="prediction-summary">
+                <h4>${days} Days Forecast for ${city.charAt(0).toUpperCase() + city.slice(1)}</h4>
+                <div class="summary-stats">
+                    <div class="stat">
+                        <span class="stat-label">Avg Temp:</span>
+                        <span class="stat-value">${avgTemp.toFixed(1)}°C</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Max:</span>
+                        <span class="stat-value">${Math.max(...predictions.tempsMax).toFixed(1)}°C</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Min:</span>
+                        <span class="stat-value">${Math.min(...predictions.tempsMin).toFixed(1)}°C</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Rain:</span>
+                        <span class="stat-value">${totalPrecipitation.toFixed(1)}mm</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="charts-section">
+                <h5>Visual Analysis</h5>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <canvas id="tempChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="weatherPieChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="precipitationChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="tempDistributionChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="weatherTimelineChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="statsChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="weather-distribution">
+                <h5>Weather Distribution</h5>
+                <div class="weather-bars">
+        `;
+        
+        Object.keys(weatherCounts).forEach(weather => {
+            const percentage = (weatherCounts[weather] / days * 100).toFixed(1);
+            const emoji = getWeatherEmoji(weather);
+            html += `
+                <div class="weather-bar">
+                    <span class="weather-label">${emoji} ${weather.charAt(0).toUpperCase() + weather.slice(1)}</span>
+                    <div class="bar-container">
+                        <div class="bar" style="width: ${percentage}%"></div>
+                    </div>
+                    <span class="percentage">${percentage}%</span>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+            
+            <div class="daily-forecast">
+                <h5>Daily Forecast</h5>
+                <div class="forecast-list">
+        `;
+        
+        for (let i = 0; i < days; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() + i + 1);
+            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const emoji = getWeatherEmoji(predictions.weather[i]);
+            const precipText = predictions.precipitation[i] > 0 ? `, ${predictions.precipitation[i].toFixed(1)}mm` : '';
+            
+            html += `
+                <div class="forecast-day">
+                    <div class="day-info">
+                        <span class="date">${dateStr}</span>
+                        <span class="weather">${emoji} ${predictions.weather[i].charAt(0).toUpperCase() + predictions.weather[i].slice(1)}</span>
+                    </div>
+                    <div class="temp-info">
+                        <span class="temp-max">${predictions.tempsMax[i].toFixed(1)}°C</span>
+                        <span class="temp-min">${predictions.tempsMin[i].toFixed(1)}°C</span>
+                        ${precipText ? `<span class="precip">${precipText}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += `
+                </div>
+            </div>
+        `;
+        
+        resultsDiv.innerHTML = html;
+        
+        // Generate charts after HTML is inserted
+        setTimeout(() => {
+            generateCharts(predictions, days, avgTemp, weatherCounts, totalPrecipitation);
+        }, 100);
+        
+    } catch (error) {
+        console.error('Prediction error:', error);
+        resultsDiv.innerHTML = '<p class="error">Failed to generate predictions. Please try again.</p>';
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-magic"></i> Predict';
+    }
+}
+
+function generateCharts(predictions, days, avgTemp, weatherCounts, totalPrecipitation) {
+    const daysRange = Array.from({length: days}, (_, i) => i + 1);
+    
+    // 1. Temperature Chart
+    const tempCtx = document.getElementById('tempChart').getContext('2d');
+    new Chart(tempCtx, {
+        type: 'line',
+        data: {
+            labels: daysRange,
+            datasets: [{
+                label: 'Max Temperature (°C)',
+                data: predictions.tempsMax,
+                borderColor: '#ff6b6b',
+                backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: '#ff6b6b',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }, {
+                label: 'Min Temperature (°C)',
+                data: predictions.tempsMin,
+                borderColor: '#4ecdc4',
+                backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: '#4ecdc4',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Temperature Prediction',
+                    color: '#ffffff',
+                    font: { size: 14, weight: 'bold' }
+                },
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Days',
+                        color: '#ffffff'
+                    },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Temperature (°C)',
+                        color: '#ffffff'
+                    },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                }
+            }
+        }
+    });
+    
+    // 2. Weather Distribution Pie Chart
+    const weatherLabels = Object.keys(weatherCounts);
+    const weatherData = Object.values(weatherCounts);
+    const weatherColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
+    
+    const pieCtx = document.getElementById('weatherPieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: weatherLabels.map(w => w.charAt(0).toUpperCase() + w.slice(1)),
+            datasets: [{
+                data: weatherData,
+                backgroundColor: weatherColors.slice(0, weatherLabels.length),
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Weather Distribution',
+                    color: '#ffffff',
+                    font: { size: 14, weight: 'bold' }
+                },
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            }
+        }
+    });
+    
+    // 3. Precipitation Chart
+    const precipCtx = document.getElementById('precipitationChart').getContext('2d');
+    new Chart(precipCtx, {
+        type: 'bar',
+        data: {
+            labels: daysRange,
+            datasets: [{
+                label: 'Precipitation (mm)',
+                data: predictions.precipitation,
+                backgroundColor: 'rgba(116, 185, 255, 0.6)',
+                borderColor: '#74b9ff',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Daily Precipitation',
+                    color: '#ffffff',
+                    font: { size: 14, weight: 'bold' }
+                },
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Days',
+                        color: '#ffffff'
+                    },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Precipitation (mm)',
+                        color: '#ffffff'
+                    },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // 4. Temperature Distribution Histogram
+    const allTemps = [...predictions.tempsMax, ...predictions.tempsMin];
+    const tempDistCtx = document.getElementById('tempDistributionChart').getContext('2d');
+    new Chart(tempDistCtx, {
+        type: 'bar',
+        data: {
+            labels: Array.from({length: Math.ceil((Math.max(...allTemps) - Math.min(...allTemps)) / 2) + 1}, 
+                              (_, i) => (Math.min(...allTemps) + i * 2).toFixed(1)),
+            datasets: [{
+                label: 'Max Temps',
+                data: createHistogramData(predictions.tempsMax, Math.min(...allTemps), Math.max(...allTemps)),
+                backgroundColor: 'rgba(255, 107, 107, 0.6)',
+                borderColor: '#ff6b6b',
+                borderWidth: 1
+            }, {
+                label: 'Min Temps',
+                data: createHistogramData(predictions.tempsMin, Math.min(...allTemps), Math.max(...allTemps)),
+                backgroundColor: 'rgba(78, 205, 196, 0.6)',
+                borderColor: '#4ecdc4',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Temperature Distribution',
+                    color: '#ffffff',
+                    font: { size: 14, weight: 'bold' }
+                },
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Temperature (°C)',
+                        color: '#ffffff'
+                    },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Frequency',
+                        color: '#ffffff'
+                    },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // 5. Weather Timeline
+    const uniqueWeather = [...new Set(predictions.weather)];
+    const weatherNumeric = predictions.weather.map(w => uniqueWeather.indexOf(w));
+    
+    const timelineCtx = document.getElementById('weatherTimelineChart').getContext('2d');
+    new Chart(timelineCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Weather Conditions',
+                data: daysRange.map((day, i) => ({ x: day, y: weatherNumeric[i] })),
+                backgroundColor: weatherColors.slice(0, uniqueWeather.length),
+                borderColor: '#ffffff',
+                borderWidth: 2,
+                pointRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Daily Weather Conditions',
+                    color: '#ffffff',
+                    font: { size: 14, weight: 'bold' }
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Days',
+                        color: '#ffffff'
+                    },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Weather Type',
+                        color: '#ffffff'
+                    },
+                    ticks: {
+                        color: '#ffffff',
+                        callback: function(value) {
+                            return uniqueWeather[value] ? uniqueWeather[value].charAt(0).toUpperCase() + uniqueWeather[value].slice(1) : '';
+                        }
+                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                }
+            }
+        }
+    });
+    
+    // 6. Statistics Summary
+    const statsCtx = document.getElementById('statsChart').getContext('2d');
+    new Chart(statsCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Avg Temp', 'Max Temp', 'Min Temp'],
+            datasets: [{
+                label: 'Temperature (°C)',
+                data: [avgTemp, Math.max(...predictions.tempsMax), Math.min(...predictions.tempsMin)],
+                backgroundColor: ['#8a2be2', '#ff6b6b', '#4ecdc4'],
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Temperature Statistics',
+                    color: '#ffffff',
+                    font: { size: 14, weight: 'bold' }
+                },
+                legend: {
+                    labels: { color: '#ffffff' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Temperature (°C)',
+                        color: '#ffffff'
+                    },
+                    ticks: { color: '#ffffff' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                }
+            }
+        }
+    });
+}
+
+function createHistogramData(data, minVal, maxVal) {
+    const binSize = 2;
+    const bins = Math.ceil((maxVal - minVal) / binSize) + 1;
+    const histogram = new Array(bins).fill(0);
+    
+    data.forEach(value => {
+        const binIndex = Math.floor((value - minVal) / binSize);
+        if (binIndex >= 0 && binIndex < bins) {
+            histogram[binIndex]++;
+        }
+    });
+    
+    return histogram;
+}
+
+function getWeatherEmoji(weather) {
+    const emojis = {
+        'clear': '☀️',
+        'sunny': '☀️',
+        'rain': '🌧️',
+        'thunderstorm': '⛈️',
+        'clouds': '☁️',
+        'haze': '🌫️',
+        'mist': '🌫️',
+        'fog': '🌫️'
+    };
+    return emojis[weather] || '🌤️';
+}
+
+// Add prediction button to controls
+function addPredictionButton() {
+    const controls = document.querySelector('.controls');
+    if (controls) {
+        const predictionBtn = document.createElement('button');
+        predictionBtn.id = 'prediction-toggle-btn';
+        predictionBtn.className = 'control-btn';
+        predictionBtn.title = 'Weather Predictions (Ctrl+P)';
+        predictionBtn.innerHTML = '<i class="fas fa-chart-line"></i>';
+        
+        predictionBtn.addEventListener('click', () => {
+            let panel = document.getElementById('prediction-panel');
+            if (!panel) {
+                panel = createPredictionPanel();
+            }
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        controls.appendChild(predictionBtn);
+    }
+}
+
+// Add keyboard shortcut for predictions
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 'p') {
+        e.preventDefault();
+        const panel = document.getElementById('prediction-panel');
+        if (panel) {
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        } else {
+            const newPanel = createPredictionPanel();
+            newPanel.style.display = 'block';
+        }
+    }
+});
+
+// Initialize prediction system
+document.addEventListener('DOMContentLoaded', () => {
+    // Add prediction button after a short delay to ensure controls are loaded
+    setTimeout(addPredictionButton, 2000);
+});
