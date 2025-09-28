@@ -8,8 +8,11 @@ AstroWeather is an interactive 3D globe web application that displays real-time 
 
 - **Interactive 3D Globe**: Rotate, zoom, and interact with a high-quality 3D Earth model
 - **Real-time Weather Data**: Click on any location to view current weather conditions
+- **AI-Powered Clothing Recommendations**: Get personalized clothing suggestions based on current weather conditions using decision tree logic
 - **Day/Night Visualization**: Toggle between day and night views of Earth
 - **Location Search**: Find and navigate to specific locations around the globe
+- **7-Day Weather Forecast**: View extended weather predictions
+- **Air Quality Information**: Monitor air pollution levels
 - **Responsive Design**: Works on desktop and mobile devices
 - **Beautiful UI**: Clean, modern interface with smooth animations
 

@@ -849,6 +849,7 @@ function getWeatherData(latitude, longitude) {
             return response.json();
         })
         .then(data => {
+            const recommendations = getClothingRecommendation(data);
             const weatherHTML = `
                 <div class="weather-details">
                     <div class="weather-main">
@@ -866,6 +867,7 @@ function getWeatherData(latitude, longitude) {
                             <p><i class="fas fa-eye"></i> Visibility: ${(data.visibility / 1000).toFixed(1)} km</p>
                         </div>
                     </div>
+                    ${generateClothingHTML(recommendations)}
                 </div>
             `;
             
@@ -898,6 +900,146 @@ function getWeatherIcon(weatherId) {
         return 'fa-cloud'; // Clouds
     }
     return 'fa-cloud';
+}
+
+function getClothingRecommendation(weatherData) {
+    const temp = weatherData.main.temp;
+    const feelsLike = weatherData.main.feels_like;
+    const humidity = weatherData.main.humidity;
+    const windSpeed = weatherData.wind.speed;
+    const weatherId = weatherData.weather[0].id;
+    const weatherMain = weatherData.weather[0].main.toLowerCase();
+    
+    let recommendations = {
+        top: [],
+        bottom: [],
+        accessories: [],
+        footwear: [],
+        outerwear: [],
+        special: []
+    };
+    
+    // Temperature-based recommendations (using feels-like for comfort)
+    const effectiveTemp = feelsLike;
+    
+    if (effectiveTemp < -10) {
+        recommendations.top.push("Heavy thermal base layer", "Multiple sweaters", "Fleece jacket");
+        recommendations.bottom.push("Thermal long underwear", "Insulated snow pants");
+        recommendations.outerwear.push("Heavy winter coat", "Fur-lined hood");
+        recommendations.footwear.push("Insulated winter boots", "Thick wool socks");
+        recommendations.accessories.push("Heavy scarf", "Winter gloves", "Balaclava", "Thermal hat");
+    } else if (effectiveTemp < 0) {
+        recommendations.top.push("Thermal base layer", "Sweater", "Fleece jacket");
+        recommendations.bottom.push("Thermal pants", "Warm jeans");
+        recommendations.outerwear.push("Winter coat", "Heavy jacket");
+        recommendations.footwear.push("Winter boots", "Wool socks");
+        recommendations.accessories.push("Scarf", "Gloves", "Warm hat");
+    } else if (effectiveTemp < 10) {
+        recommendations.top.push("Long-sleeve shirt", "Light sweater");
+        recommendations.bottom.push("Jeans", "Warm pants");
+        recommendations.outerwear.push("Light jacket", "Blazer");
+        recommendations.footwear.push("Sneakers", "Boots");
+        recommendations.accessories.push("Light scarf", "Hat");
+    } else if (effectiveTemp < 15) {
+        recommendations.top.push("Long-sleeve shirt", "Blouse");
+        recommendations.bottom.push("Jeans", "Chinos");
+        recommendations.outerwear.push("Light jacket", "Cardigan");
+        recommendations.footwear.push("Sneakers", "Loafers");
+    } else if (effectiveTemp < 20) {
+        recommendations.top.push("T-shirt", "Polo shirt");
+        recommendations.bottom.push("Jeans", "Chinos", "Shorts");
+        recommendations.outerwear.push("Light jacket (optional)");
+        recommendations.footwear.push("Sneakers", "Sandals");
+    } else if (effectiveTemp < 25) {
+        recommendations.top.push("T-shirt", "Tank top");
+        recommendations.bottom.push("Shorts", "Light pants");
+        recommendations.footwear.push("Sandals", "Sneakers");
+    } else if (effectiveTemp < 30) {
+        recommendations.top.push("Light T-shirt", "Tank top");
+        recommendations.bottom.push("Shorts", "Light pants");
+        recommendations.footwear.push("Sandals", "Flip-flops");
+        recommendations.accessories.push("Sunglasses");
+    } else {
+        recommendations.top.push("Light tank top", "Sleeveless shirt");
+        recommendations.bottom.push("Shorts", "Light pants");
+        recommendations.footwear.push("Sandals", "Flip-flops");
+        recommendations.accessories.push("Sunglasses", "Sun hat");
+        recommendations.special.push("Stay hydrated", "Apply sunscreen");
+    }
+    
+    // Weather condition adjustments
+    if (weatherMain.includes('rain') || weatherMain.includes('drizzle')) {
+        recommendations.outerwear.push("Raincoat", "Poncho");
+        recommendations.accessories.push("Umbrella");
+        recommendations.footwear.push("Waterproof boots");
+        recommendations.special.push("Rain gear essential");
+    } else if (weatherMain.includes('snow')) {
+        recommendations.outerwear.push("Snow jacket");
+        recommendations.footwear.push("Snow boots");
+        recommendations.accessories.push("Snow gloves");
+        recommendations.special.push("Winter traction devices");
+    } else if (weatherMain.includes('thunderstorm')) {
+        recommendations.outerwear.push("Waterproof jacket");
+        recommendations.accessories.push("Umbrella");
+        recommendations.special.push("Stay indoors if possible");
+    } else if (weatherMain.includes('fog') || weatherMain.includes('mist')) {
+        recommendations.accessories.push("Reflective clothing");
+        recommendations.special.push("Drive carefully");
+    } else if (weatherMain.includes('clear') && effectiveTemp > 25) {
+        recommendations.accessories.push("Sunglasses", "Sun hat");
+        recommendations.special.push("High UV protection");
+    }
+    
+    // Humidity adjustments
+    if (humidity > 80) {
+        recommendations.top.push("Breathable fabrics");
+        recommendations.special.push("Light, moisture-wicking clothes");
+    } else if (humidity < 30) {
+        recommendations.accessories.push("Lip balm");
+        recommendations.special.push("Moisturize skin");
+    }
+    
+    // Wind adjustments
+    if (windSpeed > 10) {
+        recommendations.outerwear.push("Windbreaker");
+        recommendations.accessories.push("Wind-resistant accessories");
+        recommendations.special.push("Secure loose items");
+    } else if (windSpeed > 5) {
+        recommendations.special.push("Light wind protection");
+    }
+    
+    // Remove duplicates and format
+    Object.keys(recommendations).forEach(key => {
+        recommendations[key] = [...new Set(recommendations[key])];
+    });
+    
+    return recommendations;
+}
+
+function generateClothingHTML(recommendations) {
+    let html = '<div class="clothing-section"><h4><i class="fas fa-tshirt"></i> Clothing Recommendations</h4>';
+    
+    if (recommendations.top.length > 0) {
+        html += `<div class="clothing-category"><strong>Top:</strong> ${recommendations.top.join(', ')}</div>`;
+    }
+    if (recommendations.bottom.length > 0) {
+        html += `<div class="clothing-category"><strong>Bottom:</strong> ${recommendations.bottom.join(', ')}</div>`;
+    }
+    if (recommendations.outerwear.length > 0) {
+        html += `<div class="clothing-category"><strong>Outerwear:</strong> ${recommendations.outerwear.join(', ')}</div>`;
+    }
+    if (recommendations.footwear.length > 0) {
+        html += `<div class="clothing-category"><strong>Footwear:</strong> ${recommendations.footwear.join(', ')}</div>`;
+    }
+    if (recommendations.accessories.length > 0) {
+        html += `<div class="clothing-category"><strong>Accessories:</strong> ${recommendations.accessories.join(', ')}</div>`;
+    }
+    if (recommendations.special.length > 0) {
+        html += `<div class="clothing-category"><strong>Special Notes:</strong> ${recommendations.special.join(', ')}</div>`;
+    }
+    
+    html += '</div>';
+    return html;
 }
 
 function searchLocation() {
@@ -1197,6 +1339,8 @@ function loadDetailedWeatherData(latitude, longitude) {
                         ${generateAirQualityHTML(airQuality)}
                     </div>
                 </div>
+                
+                ${generateClothingHTML(getClothingRecommendation(current))}
             </div>
         `;
     })

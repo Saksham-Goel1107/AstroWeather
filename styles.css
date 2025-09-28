@@ -668,20 +668,36 @@ body.light-theme .close-modal:hover {
     gap: 25px;
 }
 
-.forecast-section, .air-quality-section {
+.forecast-section, .air-quality-section, .clothing-section {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 12px;
     padding: 20px;
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.forecast-section h4, .air-quality-section h4 {
+.forecast-section h4, .air-quality-section h4, .clothing-section h4 {
     margin: 0 0 15px 0;
     color: #667eea;
     display: flex;
     align-items: center;
     gap: 10px;
     font-size: 16px;
+}
+
+.clothing-category {
+    margin-bottom: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.clothing-category:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.clothing-category strong {
+    color: #667eea;
+    margin-right: 8px;
 }
 
 .forecast-list {
