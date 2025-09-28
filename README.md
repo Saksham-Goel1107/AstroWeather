@@ -1,116 +1,211 @@
-# AstroWeather - Interactive 3D Globe
+# AstroWeather with ML Weather Prediction System
 
-AstroWeather is an interactive 3D globe web application that displays real-time weather data and allows users to explore the Earth in a visually stunning interface. Similar to Google Earth or TV Garden, this application provides an immersive experience with day/night visualization, weather information, and location search capabilities.
+A stunning 3D globe application with integrated real-time weather data and AI-powered weather prediction system for Indian cities.
 
-![AstroWeather Screenshot](Screenshot.png)
+## 🌟 Features
 
-## Features
+### Core Features
+- **Interactive 3D Globe**: Navigate through a beautiful 3D representation of Earth
+- **Real-time Weather**: Get instant weather data for any location
+- **AI Weather Prediction**: ML-powered weather forecasting for Indian cities
+- **Astronomical Data**: Sunrise/sunset times, moon phases, and celestial events
+- **Smart Search**: Find any location instantly with intelligent search
+- **Responsive Design**: Seamless experience across all devices
 
-- **Interactive 3D Globe**: Rotate, zoom, and interact with a high-quality 3D Earth model
-- **Real-time Weather Data**: Click on any location to view current weather conditions
-- **Day/Night Visualization**: Toggle between day and night views of Earth
-- **Location Search**: Find and navigate to specific locations around the globe
-- **Responsive Design**: Works on desktop and mobile devices
-- **Beautiful UI**: Clean, modern interface with smooth animations
+### Weather Prediction System
+- **Indian Cities Support**: Delhi, Mumbai, Bangalore, Kolkata, Chennai
+- **Multi-day Forecasts**: 1, 3, 7, 10, or 15-day predictions
+- **Real-time Data Integration**: Uses current weather patterns for accurate predictions
+- **Climate-specific Models**: City-specific climate characteristics and seasonal variations
+- **Weather Persistence**: Accounts for weather patterns that tend to persist
+- **Export Functionality**: Download prediction data as CSV files
+- **Visual Analytics**: Charts and graphs for weather distribution and trends
 
-## Demo
+## 🚀 Quick Start
 
-You can try the live demo [here](#) (replace with your deployed URL)
+### Prerequisites
+- Python 3.7 or higher
+- Node.js (for frontend server if needed)
+- OpenWeatherMap API key (free)
 
-## Technologies Used
+### Installation
 
-- **Three.js**: For 3D rendering and globe visualization
-- **OpenWeatherMap API**: For weather data and geocoding
-- **Font Awesome**: For icons
-- **Vanilla JavaScript**: No framework dependencies
+1. **Clone or download the AstroWeather files**
 
-## Setup and Installation
-
-1. Clone the repository:
+2. **Install Python dependencies:**
    ```bash
-   git clone https://github.com/yourusername/astro-weather.git
-   cd astro-weather
+   pip install -r requirements.txt
    ```
 
-2. Install dependencies:
-   ```bash
-   npm install
+3. **Get your OpenWeatherMap API key:**
+   - Visit [OpenWeatherMap](https://openweathermap.org/api)
+   - Sign up for a free account
+   - Generate an API key
+
+4. **Configure API key:**
+   Edit `weather_api.py` and replace the API key:
+   ```python
+   env['OPENWEATHER_API_KEY'] = 'YOUR_API_KEY_HERE'
    ```
 
-## API Key Setup
+### Running the Application
 
-To use the weather data features, you need to obtain a free API key from OpenWeatherMap:
+#### Option 1: Automated Startup (Recommended)
+```bash
+python start.py
+```
+This will:
+- Install dependencies automatically
+- Start the weather prediction backend server (port 5000)
+- Start the frontend server (port 8080)
+- Open your browser automatically
 
-1. Go to [OpenWeatherMap](https://openweathermap.org/) and create a free account
-2. Navigate to your API keys section in your account dashboard
-3. Generate a new API key (or use an existing one)
-4. Open the `app.js` file in the project
-5. Replace `YOUR_OPENWEATHERMAP_API_KEY` with your actual API key:
+#### Option 2: Manual Startup
+```bash
+# Terminal 1: Start backend server
+python weather_api.py
 
-```javascript
-const WEATHER_API_KEY = 'your-api-key-here'; // Replace with your API key
+# Terminal 2: Start frontend server
+npx http-server -p 8080 -c-1 --cors
+
+# Open browser to: http://localhost:8080/glob.html
 ```
 
-**Note:** The free tier of OpenWeatherMap API allows up to 1,000 API calls per day, which is sufficient for personal use.
-
-5. Start the development server:
-   ```bash
-   npm start
-   ```
-
-6. Open your browser and navigate to `http://localhost:8080`
-
-## Usage
-
-- **Rotate Globe**: Click and drag to rotate the globe
-- **Zoom**: Use mouse wheel or pinch gestures on mobile
-- **View Weather**: Click on any location to see current weather data
-- **Search**: Enter a city or location name in the search bar
-- **Toggle Day/Night**: Use the toggle switch in the controls panel
-- **Reset View**: Click the reset button to return to the default view
-
-## Customization
-
-### Changing Globe Textures
-
-You can customize the globe appearance by replacing the texture URLs in `app.js`:
-
-```javascript
-const EARTH_TEXTURE_PATH = 'path/to/your/earth-texture.jpg';
+#### Option 3: Using npm scripts
+```bash
+npm run install-deps  # Install Python dependencies
+npm run start-backend # Start Flask server
+npm run start-frontend # Start frontend server
 ```
 
-### Adding Custom Markers
+## 🎯 How to Use
 
-You can add custom markers for specific locations by modifying the `addMarker` function in `app.js`.
+### Basic Globe Navigation
+1. **Rotate**: Click and drag to rotate the globe
+2. **Zoom**: Use zoom in/out buttons or mouse wheel
+3. **Search**: Enter location name in search box
+4. **Click**: Click on any location to add a pin and view details
 
-## Performance Optimization
+### Weather Prediction System
+1. **Open Prediction Panel**: Click the cloud icon (☁️) in the control panel
+2. **Select City**: Choose from Delhi, Mumbai, Bangalore, Kolkata, or Chennai
+3. **Choose Duration**: Select prediction period (1-15 days)
+4. **Generate**: Click "Generate Prediction" to create forecast
+5. **View Results**: See detailed daily forecasts with temperature ranges
+6. **Export Data**: Download prediction data as CSV file
 
-The application is optimized for production with the following features:
+### Understanding Predictions
+- **Weather Distribution**: Shows probability of different weather types
+- **Temperature Trends**: Daily high/low temperatures with averages
+- **Precipitation**: Expected rainfall amounts
+- **Weather Persistence**: First few days tend to follow current weather patterns
 
-- Texture compression and efficient loading
-- Responsive rendering based on device capabilities
-- Efficient animation loops
-- Lazy loading of non-critical resources
+## 🔧 Configuration
 
-## Browser Compatibility
+### API Configuration
+- **OpenWeatherMap API Key**: Required for real-time weather data
+- **Backend Port**: Default 5000 (configurable in `weather_api.py`)
+- **Frontend Port**: Default 8080 (configurable in startup scripts)
 
-AstroWeather works in all modern browsers that support WebGL:
+### Customization Options
+- **City Climate Data**: Modify climate characteristics in `weather_api.py`
+- **Prediction Parameters**: Adjust weather persistence and seasonal factors
+- **UI Theme**: Toggle between light and dark themes
 
-- Chrome (recommended)
-- Firefox
-- Safari
-- Edge
+## 📁 Project Structure
 
-## Contributing
+```
+AstroWeather/
+├── index.html          # Landing page
+├── glob.html           # Main 3D globe interface
+├── app.js              # Frontend JavaScript
+├── styles.css          # CSS styles
+├── weather_api.py      # Flask backend with ML prediction
+├── start.py           # Startup script
+├── requirements.txt    # Python dependencies
+├── package.json        # Node.js configuration
+└── README.md          # This file
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## 🔍 API Endpoints
 
-## License
+### Weather Prediction
+- `POST /api/weather/predict` - Generate weather predictions
+- `GET /api/weather/current/<city>` - Get current weather
+- `GET /api/weather/export/<city>/<days>` - Export prediction data
+- `GET /api/cities` - Get available cities
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### Example API Usage
+```javascript
+// Generate 7-day prediction for Bangalore
+fetch('http://localhost:5000/api/weather/predict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ city: 'Bangalore', days: 7 })
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
 
-## Acknowledgements
+## 🛠️ Development
 
-- Earth textures from [NASA Visible Earth](https://visibleearth.nasa.gov/)
-- Three.js for the amazing 3D library
-- OpenWeatherMap for the weather data API
+### Adding New Cities
+1. Add city data to `climate_data` in `weather_api.py`
+2. Update city selection dropdown in `glob.html`
+3. Add city mapping in API endpoints
+
+### Modifying Prediction Algorithm
+- **Seasonal Factors**: Adjust `seasonal_variation` values
+- **Weather Persistence**: Modify persistence probability (0.7 for first 3 days)
+- **Temperature Effects**: Update `weather_temp_effects` dictionary
+- **Climate Data**: Customize base temperatures and weather patterns
+
+### Troubleshooting
+
+**Backend server won't start:**
+- Check Python version (3.7+ required)
+- Verify all dependencies are installed
+- Check if port 5000 is available
+
+**Weather data not loading:**
+- Verify OpenWeatherMap API key is valid
+- Check internet connection
+- Ensure API endpoints are accessible
+
+**Frontend not loading:**
+- Check if frontend server is running on port 8080
+- Verify all files are in the correct directory
+- Clear browser cache if needed
+
+## 🌐 Browser Support
+
+- **Chrome/Edge**: Full support
+- **Firefox**: Full support
+- **Safari**: Full support
+- **Mobile browsers**: Responsive design with touch support
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📞 Support
+
+For issues and questions:
+1. Check the troubleshooting section
+2. Review the browser console for errors
+3. Verify all dependencies are installed correctly
+4. Ensure API keys are properly configured
+
+---
+
+**Built with ❤️ for space and weather enthusiasts**
+
+*Experience the beauty of our planet through interactive weather data and astronomical wonders*

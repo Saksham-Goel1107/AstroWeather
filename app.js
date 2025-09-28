@@ -324,7 +324,14 @@ function setupEventListeners() {
     
     // Fullscreen toggle
     document.getElementById('fullscreen-toggle').addEventListener('click', toggleFullscreen);
-    
+
+    // Weather prediction panel
+    document.getElementById('weather-prediction-toggle').addEventListener('click', toggleWeatherPredictionPanel);
+    document.getElementById('close-prediction-panel').addEventListener('click', closeWeatherPredictionPanel);
+    document.getElementById('generate-prediction').addEventListener('click', generateWeatherPrediction);
+    document.getElementById('export-data').addEventListener('click', exportPredictionData);
+    document.getElementById('toggle-prediction-markers').addEventListener('click', togglePredictionMarkers);
+
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboardShortcuts);
 }
@@ -403,57 +410,68 @@ function onWindowResize() {
 
 function onGlobeClick(event) {
     console.log('Globe clicked - Loading:', isLoading, 'DragOnly:', dragOnlyMode, 'Dragging:', isDragging);
-    
+
     if (isLoading) {
         console.log('Ignoring click - still loading');
         return;
     }
-    
+
     if (dragOnlyMode && isDragging) {
         console.log('Ignoring click - in drag mode and dragging');
         return;
     }
-    
+
     console.log('Processing click...');
-    
+
     // Calculate mouse position in normalized device coordinates
     const rect = renderer.domElement.getBoundingClientRect();
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-    
+
     console.log('Mouse position:', { x: mouse.x, y: mouse.y });
-    
+
     // Update the picking ray with the camera and mouse position
     raycaster.setFromCamera(mouse, camera);
-    
-    // Calculate objects intersecting the picking ray
-    const intersects = raycaster.intersectObject(globe);
-    
-    console.log('Intersections found:', intersects.length);
-    
-    if (intersects.length > 0) {
-        const intersectionPoint = intersects[0].point;
-        
-        // Convert 3D point to latitude and longitude with better accuracy
-        const normalizedPoint = intersectionPoint.clone().normalize();
-        
-        // Convert to spherical coordinates
-        const phi = Math.acos(-normalizedPoint.y); // 0 to PI
-        const theta = Math.atan2(-normalizedPoint.x, normalizedPoint.z); // -PI to PI
-        
-        // Convert to lat/lng
-        const latitude = (Math.PI / 2 - phi) * (180 / Math.PI);
-        const longitude = theta * (180 / Math.PI);
-        
-        console.log('Clicked coordinates:', { latitude, longitude, point: intersectionPoint });
-        
-        // Add pin at clicked position
-        addPin(intersectionPoint, latitude, longitude);
 
-        // Previously we auto-opened the countries modal here. Now we only add a pin and let the user
-        // open the full countries list explicitly via the 'View All Countries' button.
+    // Check for prediction marker intersections first
+    const allObjects = [globe, ...predictionMarkers];
+    const intersects = raycaster.intersectObjects(allObjects, true);
+
+    console.log('Intersections found:', intersects.length);
+
+    if (intersects.length > 0) {
+        const intersection = intersects[0];
+        const object = intersection.object;
+
+        // Check if clicked on a prediction marker
+        if (object.userData && object.userData.type === 'prediction') {
+            console.log('Clicked on prediction marker:', object.userData);
+            showPredictionInfo(object.userData);
+            return;
+        }
+
+        // Handle regular globe clicks
+        if (object === globe || object.parent === globe) {
+            const intersectionPoint = intersection.point;
+
+            // Convert 3D point to latitude and longitude with better accuracy
+            const normalizedPoint = intersectionPoint.clone().normalize();
+
+            // Convert to spherical coordinates
+            const phi = Math.acos(-normalizedPoint.y); // 0 to PI
+            const theta = Math.atan2(-normalizedPoint.x, normalizedPoint.z); // -PI to PI
+
+            // Convert to lat/lng
+            const latitude = (Math.PI / 2 - phi) * (180 / Math.PI);
+            const longitude = theta * (180 / Math.PI);
+
+            console.log('Clicked coordinates:', { latitude, longitude, point: intersectionPoint });
+
+            // Add pin at clicked position
+            addPin(intersectionPoint, latitude, longitude);
+        }
     } else {
-        console.log('No intersection with globe found');
+        console.log('No intersection found');
     }
 }
 
@@ -1553,22 +1571,375 @@ function loadAstronomicalData(latitude, longitude) {
         });
 }
 
+// Weather Prediction Functions
+let predictionMarkers = [];
+let currentPredictionData = null;
+
+function toggleWeatherPredictionPanel() {
+    const panel = document.getElementById('weather-prediction-panel');
+    panel.classList.toggle('active');
+    playSound('click');
+}
+
+function closeWeatherPredictionPanel() {
+    const panel = document.getElementById('weather-prediction-panel');
+    panel.classList.remove('active');
+    playSound('click');
+}
+
+async function generateWeatherPrediction() {
+    const city = document.getElementById('prediction-city').value;
+    const days = parseInt(document.getElementById('prediction-days').value);
+
+    // Show loading
+    const loadingEl = document.getElementById('prediction-loading');
+    const resultsEl = document.getElementById('prediction-results');
+    const generateBtn = document.getElementById('generate-prediction');
+
+    loadingEl.style.display = 'flex';
+    resultsEl.style.display = 'none';
+    generateBtn.disabled = true;
+
+    try {
+        const response = await fetch('http://localhost:5000/api/weather/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ city, days })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate prediction');
+        }
+
+        const data = await response.json();
+        displayPredictionResults(data);
+
+    } catch (error) {
+        console.error('Error generating prediction:', error);
+        alert('Error generating weather prediction. Make sure the Python server is running on port 5000.');
+    } finally {
+        loadingEl.style.display = 'none';
+        generateBtn.disabled = false;
+    }
+}
+
+function displayPredictionResults(data) {
+    const resultsEl = document.getElementById('prediction-results');
+    const avgTempEl = document.getElementById('avg-temp');
+    const totalPrecipEl = document.getElementById('total-precip');
+    const commonWeatherEl = document.getElementById('common-weather');
+    const container = document.getElementById('daily-forecast-container');
+
+    // Store prediction data for globe integration
+    currentPredictionData = data;
+
+    // Update summary stats
+    avgTempEl.textContent = `${data.forecast.average_temperature.toFixed(1)}°C`;
+    totalPrecipEl.textContent = `${data.forecast.total_precipitation.toFixed(1)}mm`;
+    commonWeatherEl.textContent = data.forecast.most_common_weather;
+
+    // Generate daily forecast items
+    container.innerHTML = '';
+    data.forecast.daily_forecast.forEach(day => {
+        const item = document.createElement('div');
+        item.className = 'forecast-item';
+
+        const weatherIcon = getWeatherIconFromText(day.weather_condition);
+        const date = new Date(day.date).toLocaleDateString([], {month: '2-digit', day: '2-digit'});
+
+        item.innerHTML = `
+            <div class="forecast-date">${date}</div>
+            <div class="forecast-weather">
+                <span class="forecast-weather-icon">${weatherIcon}</span>
+                <span class="forecast-condition">${day.weather_condition}</span>
+            </div>
+            <div class="forecast-temps">
+                <span class="forecast-temp-max">${day.max_temp.toFixed(1)}°</span>
+                <span class="forecast-temp-min">${day.min_temp.toFixed(1)}°</span>
+            </div>
+            ${day.precipitation > 0 ? `<div class="forecast-precip">${day.precipitation.toFixed(1)}mm</div>` : ''}
+        `;
+
+        container.appendChild(item);
+    });
+
+    // Generate weather distribution chart
+    generateWeatherDistributionChart(data.forecast.weather_distribution);
+
+    // Add prediction markers to globe
+    addPredictionMarkersToGlobe(data);
+
+    // Show prediction markers toggle button
+    const toggleBtn = document.getElementById('toggle-prediction-markers');
+    toggleBtn.style.display = 'flex';
+
+    // Show results
+    resultsEl.style.display = 'block';
+    playSound('success');
+}
+
+function getWeatherIconFromText(weatherText) {
+    const iconMap = {
+        'clear': '☀️',
+        'sunny': '☀️',
+        'rain': '🌧️',
+        'thunderstorm': '⛈️',
+        'clouds': '☁️',
+        'haze': '🌫️',
+        'mist': '🌫️',
+        'fog': '🌫️'
+    };
+    return iconMap[weatherText.toLowerCase()] || '🌤️';
+}
+
+function addPredictionMarkersToGlobe(data) {
+    // Clear existing prediction markers
+    clearPredictionMarkers();
+
+    // City coordinates for Indian cities
+    const cityCoordinates = {
+        'Delhi': { lat: 28.6139, lng: 77.2090 },
+        'Mumbai': { lat: 19.0760, lng: 72.8777 },
+        'Bangalore': { lat: 12.9716, lng: 77.5946 },
+        'Kolkata': { lat: 22.5726, lng: 88.3639 },
+        'Chennai': { lat: 13.0827, lng: 80.2707 }
+    };
+
+    const cityCoords = cityCoordinates[data.city];
+    if (!cityCoords) return;
+
+    // Create prediction marker for the city
+    const phi = (90 - cityCoords.lat) * (Math.PI / 180);
+    const theta = (cityCoords.lng + 180) * (Math.PI / 180);
+
+    const x = -GLOBE_RADIUS * Math.sin(phi) * Math.cos(theta);
+    const y = GLOBE_RADIUS * Math.cos(phi);
+    const z = GLOBE_RADIUS * Math.sin(phi) * Math.sin(theta);
+
+    const position = new THREE.Vector3(x, y, z);
+
+    // Create prediction marker group
+    const markerGroup = new THREE.Group();
+
+    // Main marker sphere (blue for prediction)
+    const markerGeometry = new THREE.SphereGeometry(0.08, 16, 16);
+    const markerMaterial = new THREE.MeshPhongMaterial({
+        color: 0x4CAF50, // Green for prediction markers
+        shininess: 100,
+        specular: 0x222222,
+        transparent: true,
+        opacity: 0.8
+    });
+
+    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+    markerGroup.add(marker);
+
+    // Add pulsing ring effect
+    const ringGeometry = new THREE.RingGeometry(0.12, 0.15, 16);
+    const ringMaterial = new THREE.MeshBasicMaterial({
+        color: 0x4CAF50,
+        transparent: true,
+        opacity: 0.4,
+        side: THREE.DoubleSide
+    });
+
+    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+    ring.rotation.x = -Math.PI / 2; // Make ring horizontal
+    markerGroup.add(ring);
+
+    // Position marker
+    const markerPosition = position.clone().normalize().multiplyScalar(GLOBE_RADIUS + 0.3);
+    markerGroup.position.copy(markerPosition);
+
+    // Orient marker to point outward
+    markerGroup.lookAt(markerPosition.clone().add(markerPosition.clone().normalize()));
+
+    // Store prediction data in marker
+    markerGroup.userData = {
+        type: 'prediction',
+        city: data.city,
+        forecast: data.forecast,
+        coordinates: cityCoords
+    };
+
+    // Add to scene
+    scene.add(markerGroup);
+    predictionMarkers.push(markerGroup);
+
+    // Add click event for prediction marker
+    markerGroup.children.forEach(child => {
+        child.userData = markerGroup.userData;
+    });
+
+    // Animate the marker
+    animatePredictionMarker(markerGroup);
+
+    console.log(`Added prediction marker for ${data.city}`);
+}
+
+function clearPredictionMarkers() {
+    predictionMarkers.forEach(marker => {
+        scene.remove(marker);
+    });
+    predictionMarkers = [];
+}
+
+function animatePredictionMarker(marker) {
+    let pulseDirection = 1;
+    let scale = 1;
+
+    function animate() {
+        if (predictionMarkers.includes(marker)) {
+            // Pulsing effect
+            scale += pulseDirection * 0.02;
+            if (scale > 1.3 || scale < 0.8) {
+                pulseDirection *= -1;
+            }
+
+            marker.scale.set(scale, scale, scale);
+            marker.children[1].material.opacity = (scale - 0.8) / 0.5 * 0.4; // Ring opacity
+
+            requestAnimationFrame(animate);
+        }
+    }
+
+    animate();
+}
+
+function closeWeatherPredictionPanel() {
+    const panel = document.getElementById('weather-prediction-panel');
+    panel.classList.remove('active');
+
+    // Clear prediction markers when closing panel
+    clearPredictionMarkers();
+    currentPredictionData = null;
+
+    // Hide prediction markers toggle button
+    const toggleBtn = document.getElementById('toggle-prediction-markers');
+    toggleBtn.style.display = 'none';
+
+    playSound('click');
+}
+
+function togglePredictionMarkers() {
+    if (predictionMarkers.length === 0) return;
+
+    const isVisible = predictionMarkers[0].visible;
+    predictionMarkers.forEach(marker => {
+        marker.visible = !isVisible;
+    });
+
+    // Update button icon
+    const button = document.getElementById('toggle-prediction-markers');
+    const icon = button.querySelector('i');
+    icon.className = isVisible ? 'fas fa-eye-slash' : 'fas fa-map-marker-alt';
+
+    playSound('click');
+}
+
+function showPredictionInfo(markerData) {
+    // Create a simple popup with prediction information
+    const popup = document.createElement('div');
+    popup.className = 'prediction-popup';
+    popup.innerHTML = `
+        <div class="prediction-popup-content">
+            <h4>${markerData.city} Weather Prediction</h4>
+            <p><strong>Avg Temp:</strong> ${markerData.forecast.average_temperature.toFixed(1)}°C</p>
+            <p><strong>Most Common:</strong> ${markerData.forecast.most_common_weather}</p>
+            <p><strong>Precipitation:</strong> ${markerData.forecast.total_precipitation.toFixed(1)}mm</p>
+            <button onclick="this.parentElement.parentElement.remove()">Close</button>
+        </div>
+    `;
+
+    // Style the popup
+    popup.style.position = 'fixed';
+    popup.style.top = '50%';
+    popup.style.left = '50%';
+    popup.style.transform = 'translate(-50%, -50%)';
+    popup.style.background = 'rgba(0, 0, 0, 0.9)';
+    popup.style.color = 'white';
+    popup.style.padding = '20px';
+    popup.style.borderRadius = '10px';
+    popup.style.zIndex = '1001';
+    popup.style.textAlign = 'center';
+    popup.style.minWidth = '250px';
+
+    document.body.appendChild(popup);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (popup.parentElement) {
+            popup.remove();
+        }
+    }, 5000);
+
+    playSound('notification');
+}
+
+function generateWeatherDistributionChart(distribution) {
+    const chartContainer = document.getElementById('weather-distribution-chart');
+    chartContainer.innerHTML = '';
+
+    Object.entries(distribution).forEach(([weather, count]) => {
+        const percentage = ((count / Object.values(distribution).reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+
+        const bar = document.createElement('div');
+        bar.className = 'weather-bar';
+
+        bar.innerHTML = `
+            <span class="weather-bar-label">${weather}</span>
+            <div class="weather-bar-fill" style="width: ${percentage}%"></div>
+            <span class="weather-bar-value">${count} days</span>
+        `;
+
+        chartContainer.appendChild(bar);
+    });
+}
+
+async function exportPredictionData() {
+    const city = document.getElementById('prediction-city').value;
+    const days = parseInt(document.getElementById('prediction-days').value);
+
+    try {
+        const response = await fetch(`http://localhost:5000/api/weather/export/${city}/${days}`);
+        const data = await response.json();
+
+        // Create and download CSV file
+        const blob = new Blob([data.data], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = data.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        playSound('success');
+    } catch (error) {
+        console.error('Error exporting data:', error);
+        alert('Error exporting prediction data. Make sure the Python server is running.');
+    }
+}
+
 function animate() {
     requestAnimationFrame(animate);
-    
+
     // Update controls
     controls.update();
-    
+
     // Update button position if exists
     if (currentPin && detailsButton) {
         updateButtonPosition();
     }
-    
+
     // Rotate clouds slightly faster than the globe
     if (globe.userData.clouds) {
         globe.userData.clouds.rotation.y += 0.0002;
     }
-    
+
     // Render scene
     renderer.render(scene, camera);
 }

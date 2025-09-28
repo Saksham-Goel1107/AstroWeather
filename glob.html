@@ -52,24 +52,132 @@
             <button id="zoom-in"><i class="fas fa-plus"></i></button>
             <button id="zoom-out"><i class="fas fa-minus"></i></button>
             <button id="reset-view"><i class="fas fa-sync-alt"></i></button>
-            
+
             <button id="drag-mode-toggle" class="drag-mode-btn active">
                 <i class="fas fa-lock"></i>
                 <span class="drag-mode-text">Drag Only</span>
             </button>
-            
+
+            <button id="weather-prediction-toggle" class="control-btn" title="Weather Prediction">
+                <i class="fas fa-cloud-sun"></i>
+            </button>
+
+            <button id="toggle-prediction-markers" class="control-btn" title="Show Prediction Markers" style="display: none;">
+                <i class="fas fa-map-marker-alt"></i>
+            </button>
+
             <button id="theme-toggle" class="control-btn" title="Toggle Theme (Ctrl+T)">
                 <i class="fas fa-sun"></i>
             </button>
-            
+
             <button id="sound-toggle" class="control-btn" title="Toggle Sound (Ctrl+M)">
                 <i class="fas fa-volume-up"></i>
             </button>
-            
+
             <button id="fullscreen-toggle" class="control-btn" title="Toggle Fullscreen (Ctrl+F)">
                 <i class="fas fa-expand"></i>
             </button>
-            
+
+        </div>
+
+        <!-- Weather Prediction Panel -->
+        <div id="weather-prediction-panel" class="weather-prediction-panel">
+            <div class="panel-header">
+                <h3><i class="fas fa-cloud-sun"></i> Weather Prediction</h3>
+                <button id="close-prediction-panel" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="panel-content">
+                <!-- City Selection -->
+                <div class="form-group">
+                    <label for="prediction-city">Select City:</label>
+                    <select id="prediction-city" class="form-select">
+                        <option value="Delhi">Delhi</option>
+                        <option value="Mumbai">Mumbai</option>
+                        <option value="Bangalore" selected>Bangalore</option>
+                        <option value="Kolkata">Kolkata</option>
+                        <option value="Chennai">Chennai</option>
+                    </select>
+                </div>
+
+                <!-- Days Selection -->
+                <div class="form-group">
+                    <label for="prediction-days">Prediction Period:</label>
+                    <select id="prediction-days" class="form-select">
+                        <option value="1">1 Day</option>
+                        <option value="3">3 Days</option>
+                        <option value="7" selected>7 Days</option>
+                        <option value="10">10 Days</option>
+                        <option value="15">15 Days</option>
+                    </select>
+                </div>
+
+                <!-- Generate Button -->
+                <button id="generate-prediction" class="btn-primary">
+                    <i class="fas fa-play"></i>
+                    Generate Prediction
+                </button>
+
+                <!-- Loading Indicator -->
+                <div id="prediction-loading" class="loading-indicator" style="display: none;">
+                    <div class="spinner"></div>
+                    <span>Generating prediction...</span>
+                </div>
+
+                <!-- Results -->
+                <div id="prediction-results" class="prediction-results" style="display: none;">
+                    <div class="results-header">
+                        <h4>Weather Forecast</h4>
+                        <div class="export-btn">
+                            <button id="export-data" class="btn-secondary">
+                                <i class="fas fa-download"></i>
+                                Export CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Stats -->
+                    <div class="summary-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-thermometer-half"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="avg-temp">25.2°C</div>
+                                <div class="stat-label">Average Temperature</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-cloud-rain"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="total-precip">15.3mm</div>
+                                <div class="stat-label">Total Precipitation</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-sun"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="common-weather">Clear</div>
+                                <div class="stat-label">Most Common Weather</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Forecast -->
+                    <div class="daily-forecast">
+                        <h5>Daily Breakdown</h5>
+                        <div id="daily-forecast-container" class="forecast-container">
+                            <!-- Daily forecast items will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Weather Distribution -->
+                    <div class="weather-distribution">
+                        <h5>Weather Distribution</h5>
+                        <div id="weather-distribution-chart" class="distribution-chart">
+                            <!-- Chart will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
